@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "iio.h"
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 /*----------------------------------------------------------------------------*/
 /* LN10 */
@@ -161,15 +163,14 @@ double log_nfa(int n, int k, double p, double logNT)
 int * compute_grid_votes_per_pixel(double * image, int X, int Y)
 {
   double cos_t[8][8];
-  int x,y,xx,yy,i,j,n;
-
-  /* compute cosine table */
-  for(i=0; i<8; i++)
-  for(j=0; j<8; j++)
-    cos_t[i][j] = cos( (2.0 * i + 1.0) * j * M_PI / 16.0 );
-
   int * zeros;
   int * votes;
+  int x,y,k,l,n;
+
+  /* compute cosine table */
+  for(k=0; k<8; k++)
+  for(l=0; l<8; l++)
+    cos_t[k][l] = cos( (2.0 * k + 1.0) * l * M_PI / 16.0 );
 
   /* initialize zeros and votes */
   zeros = (int *) xmalloc( X * Y * sizeof(int) );
@@ -177,11 +178,12 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y)
   for(n=0; n<X*Y; n++) zeros[n] = votes[n] = -1;
 
   /* compute DCT by 8x8 blocks */
-#pragma omp for private(x,y)
+#pragma omp parallel for private(x,y)
   for(x=0; x<X-7; x++)
   for(y=0; y<Y-7; y++)
     {
       int z = 0; /* number of zeros */
+      int xx,yy,i,j;
 
       /* compute DCT for the 8x8 block staring at x,y and count its zeros */
       for(i=0; i<8; i++)
@@ -189,6 +191,7 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y)
       if( i > 0 || j > 0 ) /* the coefficient 0 should not be counted */
         {
           double dct_ij = 0.0;
+
           for(xx=0; xx<8; xx++)
           for(yy=0; yy<8; yy++)
             dct_ij += image[ x+xx + (y+yy) * X ] * cos_t[xx][i] * cos_t[yy][j];
