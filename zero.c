@@ -16,7 +16,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with this program. If not, see <http://www.gnu.org/licenses/>.
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
   ----------------------------------------------------------------------------*/
 
@@ -24,9 +24,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "iio.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 /*----------------------------------------------------------------------------*/
 /* LN10 */
@@ -51,7 +48,6 @@
 
 /*----------------------------------------------------------------------------*/
 #define MAX(a,b) ( (a)>(b) ? (a) : (b) )
-#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
 
 /*----------------------------------------------------------------------------*/
 /* fatal error, print a message to standard-error output and exit.
