@@ -63,7 +63,7 @@ test images. This can be done by executing:
 ```
 
 This should print the following message:
-``
+```
 test on roma.pgm
 ----------------
 ./zero roma.pgm
@@ -85,7 +85,7 @@ test on tampered2.ppm
 ./zero tampered2.ppm
 main grid: #6 [6 0] log(nfa) = -6618.52
 forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32.2729
-``
+```
 
 
 Running ZERO Command
