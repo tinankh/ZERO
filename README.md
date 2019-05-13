@@ -88,13 +88,6 @@ forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32
 ```
 
 
-Running ZERO Command
--------------------
-The command execution is just
-```bash
-    ./zero
-```
-
 Copyright and License
 ---------------------
 
