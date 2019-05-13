@@ -56,6 +56,38 @@ or if you want the code to be parallel
 from the directory where the source codes and the Makefile are located.
 
 
+To verify a correct compilation you can apply the algorithm to the
+test images. This can be done by executing:
+```bash
+    make test
+```
+
+This should print the following message:
+``
+test on roma.pgm
+----------------
+./zero roma.pgm
+no overall JPEG grid found
+
+test on pelican.ppm
+-------------------
+./zero pelican.ppm
+main grid: #6 [6 0] log(nfa) = -6821.13
+
+test on tampered1.pgm
+---------------------
+./zero tampered1.pgm
+no overall JPEG grid found
+forgery found: 104 94 - 153 159 [50x66] grid: #0 [0 0] n 68 k 30 log(nfa) = -25.2505
+
+test on tampered2.ppm
+---------------------
+./zero tampered2.ppm
+main grid: #6 [6 0] log(nfa) = -6618.52
+forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32.2729
+``
+
+
 Running ZERO Command
 -------------------
 The command execution is just
