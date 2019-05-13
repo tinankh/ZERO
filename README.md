@@ -96,7 +96,7 @@ forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32
 Copyright and License
 ---------------------
 
-Copyright (c) 2018-2019 Rafael Grompone von Gioi <grompone@cmla.ens-cachan.fr>
+Copyright (c) 2018-2019 Rafael Grompone von Gioi <grompone@gmail.com>
 Copyright (c) 2018-2019 Tina Nikoukhah <nikoukhah@cmla.ens-cachan.fr>
 Copyright (c) 2018-2019 Jérémy Anger <anger@cmla.ens-cachan.fr>
 Copyright (c) 2018-2019 Thibaud Ehret <ehret@cmla.ens-cachan.fr>
