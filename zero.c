@@ -1,6 +1,9 @@
 /*----------------------------------------------------------------------------
 
   Copyright (c) 2018-2019 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2019 Tina Nikoukhah <nikoukhah@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2019 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2019 Thibaud Ehret <ehret@cmla.ens-cachan.fr>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
