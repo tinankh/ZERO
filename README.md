@@ -25,6 +25,7 @@ detection in images described in the paper:
      Application to Automatic and Localized Forgery Detection" by Tina
      Nikoukhah, Jérémy Anger, Thibaud Ehret, Miguel Colom, Jean-Michel
      Morel and Rafael Grompone von Gioi.
+[PDF](http://openaccess.thecvf.com/content_CVPRW_2019/papers/Media%20Forensics/Nikoukhah_JPEG_Grid_Detection_based_on_the_Number_of_DCT_Zeros_CVPRW_2019_paper.pdf)     
 
 
 Online Demo
