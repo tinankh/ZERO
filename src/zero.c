@@ -1,9 +1,7 @@
 /*----------------------------------------------------------------------------
 
-  Copyright (c) 2018-2019 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2019 Tina Nikoukhah <nikoukhah@cmla.ens-cachan.fr>
-  Copyright (c) 2018-2019 Jérémy Anger <anger@cmla.ens-cachan.fr>
-  Copyright (c) 2018-2019 Thibaud Ehret <ehret@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -162,7 +160,7 @@ double log_nfa(int n, int k, double p, double logNT)
 int * compute_grid_votes_per_pixel(double * image, int X, int Y)
 {
   double cos_t[8][8];
-  int * zeros;
+  int * zeros;  /* maximal number of zeros found for a given pixel */
   int * votes;
   int x,y,k,l,n;
 
@@ -174,7 +172,8 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y)
   /* initialize zeros and votes */
   zeros = (int *) xmalloc( X * Y * sizeof(int) );
   votes = (int *) xmalloc( X * Y * sizeof(int) );
-  for(n=0; n<X*Y; n++) zeros[n] = votes[n] = -1;
+  for(n=0; n<X*Y; n++) zeros[n] = 0;
+  for(n=0; n<X*Y; n++) zeros[n] = -1;
 
   /* compute DCT by 8x8 blocks */
 #pragma omp parallel for private(x,y)
@@ -183,6 +182,18 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y)
     {
       int z = 0; /* number of zeros */
       int xx,yy,i,j;
+      int constant_along_x = TRUE;
+      int constant_along_y = TRUE;
+
+      /* check whether the block is constant along x or y axis */
+      for(xx=1; xx<8 && (constant_along_x || constant_along_y); xx++)
+      for(yy=1; yy<8 && (constant_along_x || constant_along_y); yy++)
+        {
+          if( image[ x+xx + (y+yy) * X ] != image[ x+0 + (y+yy) * X ] )
+            constant_along_x = FALSE;
+          if( image[ x+xx + (y+yy) * X ] != image[ x+xx + (y+0) * X ] )
+            constant_along_y = FALSE;
+        }
 
       /* compute DCT for the 8x8 block staring at x,y and count its zeros */
       for(i=0; i<8; i++)
@@ -209,17 +220,31 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y)
       for(xx=x; xx<x+8; xx++)
       for(yy=y; yy<y+8; yy++)
         {
-          /* if two grids are tied in number of zeros, do not vote */
-          if( z == zeros[xx+yy*X] ) votes[xx+yy*X] = -1;
+          /* if two grids are tied in number of zeros, do not vote.
+             take the abs of the number of zeros as negative numbers
+             correspond to the number of zeros of blocks constant along
+             the x or y axis */
+          if( z == abs(zeros[xx+yy*X]) ) votes[xx+yy*X] = -1;
 
-          /* update votes when the current grid has more zeros */
-          if( z > zeros[xx+yy*X] )
+          /* update votes when the current grid has more zeros.
+             take the abs of the number of zeros as negative numbers
+             correspond to the number of zeros of blocks constant along
+             the x or y axis */
+          if( z > abs(zeros[xx+yy*X]) )
             {
-              zeros[xx+yy*X] = z;
+              /* the number of zeros is put to negative to indicate
+                 a block contant along x or y axis */
+              zeros[xx+yy*X] = constant_along_x || constant_along_y ? -z : z;
               votes[xx+yy*X] = (x % 8) + (y % 8) * 8;
             }
         }
     }
+
+  /* remove votes that came from blocks constant along x or y axis */
+  for(x=0; x<X; x++)
+  for(y=0; y<Y; y++)
+    if( zeros[x+y*X] < 0 )
+      votes[x+y*X] = -1;
 
   /* store zeros and votes */
   iio_write_image_int("votes.png",votes,X,Y);

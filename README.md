@@ -1,18 +1,16 @@
 ZERO
-===
+====
 
 JPEG Grid Detection based on the Number of DCT Zeros
 and its Application to Automatic and Localized Forgery Detection
 
 ================================================
 
-Version 1 - May 13th, 2019
+Version 2 - July 2020
 
-by Tina Nikoukhah <tina.nikoukhah@cmla.ens-cachan.fr>
+by Tina Nikoukhah <tinanikoukhah@gmail.com>
 
 and Rafael Grompone von Gioi <grompone@cmla.ens-cachan.fr>
-
-joint work with Jérémy Anger, Thibaud Ehret, Miguel Colom and Jean-Michel Morel
 
 
 Introduction
@@ -97,10 +95,8 @@ forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32
 Copyright and License
 ---------------------
 
-Copyright (c) 2018-2019 Rafael Grompone von Gioi <grompone@gmail.com>
-Copyright (c) 2018-2019 Tina Nikoukhah <nikoukhah@cmla.ens-cachan.fr>
-Copyright (c) 2018-2019 Jérémy Anger <anger@cmla.ens-cachan.fr>
-Copyright (c) 2018-2019 Thibaud Ehret <ehret@cmla.ens-cachan.fr>
+Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
+Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
 ZERO is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
