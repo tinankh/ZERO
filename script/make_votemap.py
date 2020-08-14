@@ -6,7 +6,9 @@ import imageio
 import numpy as np
 
 import matplotlib.pyplot as plt
-cmap = plt.get_cmap('Accent')
+
+color = 'hsv'
+cmap = plt.get_cmap(color)
 
 
 im = imageio.imread(sys.argv[1])
@@ -19,10 +21,7 @@ for x in range(height):
         if (im[x,y] == 255):
             output[x,y] = np.array((0, 0, 0))
         else:
-            rgb = 255*np.array(cmap((im[x,y]+1)/64)[:3])
+            rgb = 255*np.array(cmap((im[x,y])/64)[:3])
             output[x,y] = rgb.astype(np.uint8)
-            # output[x,y] = (int(1 + 3*im[x,y]),
-            #                int(1 + 2*im[x,y]),
-            #                int(1+ im[x,y]))
 
-imageio.imwrite('colored_votes.png', output)
+imageio.imwrite('colored_votes_' + color + '.png', output)
