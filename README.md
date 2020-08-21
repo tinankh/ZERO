@@ -1,15 +1,13 @@
 ZERO
 ====
 
-JPEG Grid Detection based on the Number of DCT Zeros
-and its Application to Automatic and Localized Forgery Detection
-
+a local JPEG grid origin detector based on the number of zeros, a forgery detection tool
 ================================================
 
-Version 2 - July 2020
+Version 2 - August 2020
 
 by Tina Nikoukhah <tinanikoukhah@gmail.com>
-
+and Jérémy Anger <anger@cmla.ens-cachan.fr>
 and Rafael Grompone von Gioi <grompone@cmla.ens-cachan.fr>
 
 
@@ -34,7 +32,7 @@ Online Demo
 Files
 -----
 
-- zero.c: Main code.
+- src/zero.c: Main code.
 
 - README.txt: this file.
 
@@ -42,9 +40,11 @@ Files
 
 - Makefile: Compilation instructions.
 
-- iio.{c,h}: [iio](https://github.com/mnhrdt/iio) code and header.
+- src/iio.{c,h}: [iio](https://github.com/mnhrdt/iio) code and header.
 
-- *.{ppm,pgm}: Test images.
+- create_votemap.py
+
+- *.png: Test images.
 
 
 Compiling
@@ -68,35 +68,53 @@ test images. This can be done by executing:
 
 This should print the following message:
 ```
-test on roma.pgm
+test on roma.png
 ----------------
-./zero roma.pgm
+./zero roma.png
 no overall JPEG grid found
 
-test on pelican.ppm
+test on pelican.png
 -------------------
-./zero pelican.ppm
+./zero pelican.png
 main grid: #6 [6 0] log(nfa) = -6821.13
+The most meaningful JPEG grid origin is not (0,0).
+This may indicate that the image has been cropped.
 
-test on tampered1.pgm
+test on tampered1.png
 ---------------------
-./zero tampered1.pgm
+./zero tampered1.png
 no overall JPEG grid found
-forgery found: 104 94 - 153 159 [50x66] grid: #0 [0 0] n 68 k 30 log(nfa) = -25.2505
 
-test on tampered2.ppm
+A grid was found here: 104 94 - 153 159 [50x66]
+grid: #0 [0 0] n 68 k 30 log(nfa) = -25.2505
+
+This may be caused
+by image manipulations such as resampling, copy-paste, splicing.
+Please examine the deviant meaningful blocks to make your own opinion about a potential forgery.
+
+test on tampered2.png
 ---------------------
-./zero tampered2.ppm
-main grid: #6 [6 0] log(nfa) = -6618.52
-forgery found: 330 68 - 401 104 [72x37] grid: #34 [2 4] n 81 k 36 log(nfa) = -32.2729
+./zero tampered2.png
+main grid: #6 [6 0] log(nfa) = -6615.48
+The most meaningful JPEG grid origin is not (0,0).
+This may indicate that the image has been cropped.
+
+A meaningful grid different from the main one was found here: 330 68 - 401 104 [72x37]
+grid: #34 [2 4] n 81 k 36 log(nfa) = -32.2729
+
+This may be caused
+by image manipulations such as resampling, copy-paste, splicing.
+Please examine the deviant meaningful blocks to make your own opinion about a potential forgery.
 ```
 
 
 Copyright and License
 ---------------------
 
-Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
 Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
+Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
+Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
+
 
 ZERO is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

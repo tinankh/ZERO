@@ -14,6 +14,14 @@ cmap = plt.get_cmap(color)
 im = imageio.imread(sys.argv[1])
 height, width = im.shape
 
+# testim = np.zeros((height, width, 1))
+# for n in range(1,64):
+#     for i in range((n-1)*8,8*n):
+#         for j in range(width):
+#             testim[i,j] = n
+
+# imageio.imwrite('testimage.tiff', testim)
+
 output = np.zeros((height, width, 3))
 
 for x in range(height):
