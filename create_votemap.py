@@ -7,29 +7,29 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-color = 'hsv'
-cmap = plt.get_cmap(color)
-
-
 im = imageio.imread(sys.argv[1])
-height, width = im.shape
 
-# testim = np.zeros((height, width, 1))
-# for n in range(1,64):
-#     for i in range((n-1)*8,8*n):
-#         for j in range(width):
-#             testim[i,j] = n
+cmap1 = plt.get_cmap('tab20')
+cmap2 = plt.get_cmap('tab20b')
+cmap3 = plt.get_cmap('tab20c')
+cmap4 = plt.get_cmap('Set3')
 
-# imageio.imwrite('testimage.tiff', testim)
+def colormap(v):
+    v = v.copy()
+    # swap 0 and 4 so that 0 is colored with green
+    v0 = v == 0
+    v4 = v == 4
+    v[v0] = 4
+    v[v4] = 0
+    v2 = cmap1(v/20)
+    v2[v >= 20] = cmap2((v[v >= 20] - 20)/20)
+    v2[v >= 40] = cmap3((v[v >= 40] - 40)/20)
+    v2[v >= 60] = cmap4((v[v >= 60] - 60)/20)
+    return v2
 
-output = np.zeros((height, width, 3))
+output = 255 * colormap(im)[...,:3]
+output[im == 255] = 0
 
-for x in range(height):
-    for y in range(width):
-        if (im[x,y] == 255):
-            output[x,y] = np.array((0, 0, 0))
-        else:
-            rgb = 255*np.array(cmap((im[x,y])/64)[:3])
-            output[x,y] = rgb.astype(np.uint8)
+output = output.astype(np.uint8)
+imageio.imwrite('colored_votes' + '.png', output)
 
-imageio.imwrite('colored_votes_' + color + '.png', output)
