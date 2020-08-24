@@ -167,9 +167,10 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
     for (int n=0; n<X*Y; n++) zeros[n] = -1;
 
     /* compute DCT by 8x8 blocks */
+    int x; int y;
 #pragma omp parallel for private(x,y)
-    for (int x=0; x<X-7; x++)
-        for (int y=0; y<Y-7; y++) {
+    for (x=0; x<X-7; x++)
+        for (y=0; y<Y-7; y++) {
             int z = 0; /* number of zeros */
             int constant_along_x = TRUE;
             int constant_along_y = TRUE;
