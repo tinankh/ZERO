@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include "iio.h"
 
 /*----------------------------------------------------------------------------*/
@@ -69,6 +70,8 @@ void * xcalloc(size_t n_items, size_t size) {
 }
 
 /*----------------------------------------------------------------------------*/
+/* convert rgb image to luminance.
+ */
 double * rgb2luminance(double * input, int X, int Y, int C) {
     double * output;
     if (C >= 3) {
@@ -122,7 +125,8 @@ double log_nfa(int n, int k, double p, double logNT) {
     bin_tail = term;
     for (int i=k+1; i<=n; i++) {
         bin_term = (double)(n-i+1) * (i<TABSIZE ?
-                                       (inv[i] ? inv[i] : (inv[i]=1.0/(double)i)) : 1.0/(double)i);
+                                      (inv[i] ? inv[i] : (inv[i]=1.0/(double)i))
+                                      : 1.0/(double)i);
         mult_term = bin_term * p_term;
         term *= mult_term;
         bin_tail += term;
@@ -132,7 +136,7 @@ double log_nfa(int n, int k, double p, double logNT) {
                the i term can be bounded by a geometric serie of form
                term_i * sum mult_term_i^j.                            */
             err = term * (( 1.0 - pow(mult_term, (double)(n-i+1))) /
-                           (1.0 - mult_term) - 1.0 );
+                          (1.0 - mult_term) - 1.0 );
 
             /* one wants an error at most of tolerance*final_result, or:
                tolerance * abs(-log10(bin_tail)-logNT).
@@ -150,6 +154,9 @@ double log_nfa(int n, int k, double p, double logNT) {
 }
 
 /*----------------------------------------------------------------------------*/
+/* computes the vote map.
+*/
+
 int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
     double cos_t[8][8];
     int * zeros;  /* maximal number of zeros found for a given pixel */
@@ -192,8 +199,10 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
 
                         for (int xx=0; xx<8; xx++)
                             for (int yy=0; yy<8; yy++)
-                                dct_ij += image[ x+xx + (y+yy) * X ] * cos_t[xx][i] * cos_t[yy][j];
-                        dct_ij *= 0.25 * (i==0 ? 1.0/sqrt(2.0) : 1.0) * (j==0 ? 1.0/sqrt(2.0) : 1.0);
+                                dct_ij += image[ x+xx + (y+yy) * X ]
+                                    * cos_t[xx][i] * cos_t[yy][j];
+                        dct_ij *= 0.25 * (i==0 ? 1.0/sqrt(2.0) : 1.0)
+                            * (j==0 ? 1.0/sqrt(2.0) : 1.0);
 
                         /* the finest quantization in JPEG is to integer values.
                            in such case, the optimal threshold to decide if a
@@ -243,6 +252,9 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
 }
 
 /*----------------------------------------------------------------------------*/
+/* detect the main grid of the image from the vote map.
+*/
+
 int detect_main_grid(int * votes, int X, int Y) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     int grid_votes[64];
@@ -281,8 +293,8 @@ int detect_main_grid(int * votes, int X, int Y) {
         printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
                most_voted_grid % 8, most_voted_grid / 8, lnfa);
         if (most_voted_grid != 0)
-        printf("The most meaningful JPEG grid origin is not (0,0).\n"
-               "This may indicate that the image has been cropped.\n");
+            printf("The most meaningful JPEG grid origin is not (0,0).\n"
+                   "This may indicate that the image has been cropped.\n");
         return most_voted_grid;
     }
 
@@ -292,6 +304,9 @@ int detect_main_grid(int * votes, int X, int Y) {
 }
 
 /*----------------------------------------------------------------------------*/
+/* creates forgery masks: detects zones which have grids different from the main grid.
+*/
+
 void detect_forgery(int * votes, int X, int Y, int main_grid) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     double p = 1.0 / 64.0;
@@ -372,17 +387,19 @@ void detect_forgery(int * votes, int X, int Y, int main_grid) {
                         printf("n %d k %d log(nfa) = %g\n",n,k,lnfa);
 
 
-                        printf("\nThis may be caused\nby image manipulations such as resampling, "
-                               "copy-paste, splicing.  \nPlease examine the deviant meaningful blocks to "
-                               "make your own opinion about a potential forgery.\n");
+                        printf("\nThis may be caused by image manipulations such as resampling, \n"
+                               "copy-paste, splicing. Please examine the deviant meaningful blocks \n"
+                               "to make your own opinion about a potential forgery.\n");
 
 
                         /* mark points of the region in the forgery mask */
                         for (int i=0; i<reg_size; i++)
                             forgery[reg_x[i] + reg_y[i]*X] = 255;
                     }
-                    else if (main_grid == 0)
-                        printf("\nNo suspicious traces found in the image with the performed analysis.\n");
+                    else if (main_grid < 1)
+                        printf("\nNo suspicious traces found in the image "
+                               "with the performed analysis.\n");
+
                 }
             }
 
