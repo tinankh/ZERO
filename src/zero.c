@@ -99,8 +99,8 @@ double * rgb2luminance(double * input, int X, int Y, int C) {
 */
 #define TABSIZE 100000
 double log_nfa(int n, int k, double p, double logNT) {
-    static double inv[TABSIZE];   /* table to keep computed inverse values */
-    double tolerance = 0.1;       /* an error of 10% in the result is accepted */
+    static double inv[TABSIZE];  /* table to keep computed inverse values */
+    double tolerance = 0.1;      /* an error of 10% in the result is accepted */
     double log1term, term, bin_term, mult_term, bin_tail, err;
     double p_term = p / (1.0-p);
 
@@ -115,11 +115,11 @@ double log_nfa(int n, int k, double p, double logNT) {
         + (double)k * log(p) + (double)(n-k) * log(1.0-p);
 
     term = exp(log1term);
-    if (term == 0.0) {                        /* the first term is almost zero */
-        if ((double)k > (double)n * p)      /* at begining or end of the tail? */
-            return log1term / M_LN10 + logNT;  /* end: use just the first term */
+    if (term == 0.0) {                       /* the first term is almost zero */
+        if ((double)k > (double)n * p)     /* at begining or end of the tail? */
+            return log1term / M_LN10 + logNT; /* end: use just the first term */
         else
-            return logNT;                      /* begin: the tail is roughly 1 */
+            return logNT;                     /* begin: the tail is roughly 1 */
     }
 
     bin_tail = term;
@@ -156,7 +156,6 @@ double log_nfa(int n, int k, double p, double logNT) {
 /*----------------------------------------------------------------------------*/
 /* computes the vote map.
 */
-
 int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
     double cos_t[8][8];
     int * zeros;  /* maximal number of zeros found for a given pixel */
@@ -174,21 +173,20 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
     for (int n=0; n<X*Y; n++) zeros[n] = -1;
 
     /* compute DCT by 8x8 blocks */
-    int x; int y;
-#pragma omp parallel for private(x,y)
-    for (x=0; x<X-7; x++)
-        for (y=0; y<Y-7; y++) {
+#pragma omp parallel for
+    for (int x=0; x<X-7; x++)
+        for (int y=0; y<Y-7; y++) {
             int z = 0; /* number of zeros */
-            int constant_along_x = TRUE;
-            int constant_along_y = TRUE;
+            int const_along_x = TRUE;
+            int const_along_y = TRUE;
 
             /* check whether the block is constant along x or y axis */
-            for (int xx=1; xx<8 && (constant_along_x || constant_along_y); xx++)
-                for (int yy=1; yy<8 && (constant_along_x || constant_along_y); yy++) {
+            for (int xx=1; xx<8 && (const_along_x || const_along_y); xx++)
+                for (int yy=1; yy<8 && (const_along_x || const_along_y); yy++) {
                     if (image[x+xx + (y+yy) * X] != image[x+ 0 + (y+yy) * X])
-                        constant_along_x = FALSE;
+                        const_along_x = FALSE;
                     if(image[x+xx + (y+yy) * X] != image[x+xx + (y+0) * X])
-                        constant_along_y = FALSE;
+                        const_along_y = FALSE;
                 }
 
             /* compute DCT for the 8x8 block staring at x,y and count its zeros */
@@ -230,7 +228,7 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
                     if (z > abs(zeros[xx+yy*X])) {
                         /* the number of zeros is put to negative to indicate
                            a block contant along x or y axis */
-                        zeros[xx+yy*X] = constant_along_x || constant_along_y ? -z : z;
+                        zeros[xx+yy*X] = const_along_x || const_along_y ? -z : z;
                         votes[xx+yy*X] = (x % 8) + (y % 8) * 8;
                     }
                 }
@@ -254,7 +252,6 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
 /*----------------------------------------------------------------------------*/
 /* detect the main grid of the image from the vote map.
 */
-
 int detect_main_grid(int * votes, int X, int Y) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     int grid_votes[64];
@@ -292,24 +289,19 @@ int detect_main_grid(int * votes, int X, int Y) {
     if (lnfa < 0.0) {
         printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
                most_voted_grid % 8, most_voted_grid / 8, lnfa);
-        if (most_voted_grid != 0)
-            printf("The most meaningful JPEG grid origin is not (0,0).\n"
-                   "This may indicate that the image has been cropped.\n");
         return most_voted_grid;
     }
 
-    /* main grid not found */
-    printf("no overall JPEG grid found\n");
     return -1;
 }
 
 /*----------------------------------------------------------------------------*/
 /* creates forgery masks: detects zones which have grids different from the main grid.
 */
-
-void detect_forgery(int * votes, int X, int Y, int main_grid) {
+int detect_forgery(int * votes, int X, int Y, int main_grid) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     double p = 1.0 / 64.0;
+    int forgery_found = 0; // initialized at false
     int * forgery;
     int * forgery_d;
     int * forgery_e;
@@ -378,6 +370,7 @@ void detect_forgery(int * votes, int X, int Y, int main_grid) {
                     double lnfa = log_nfa( n, k, p, logNT );
 
                     if (lnfa < 0.0) { /* meaningful grid different from the main found */
+                        forgery_found ++;
                         if (main_grid != -1)
                             printf("\nA meaningful grid different from the main one was found here: ");
                         else
@@ -386,20 +379,10 @@ void detect_forgery(int * votes, int X, int Y, int main_grid) {
                         printf("\ngrid: #%d [%d %d] ", grid, grid % 8, grid / 8 );
                         printf("n %d k %d log(nfa) = %g\n",n,k,lnfa);
 
-
-                        printf("\nThis may be caused by image manipulations such as resampling, \n"
-                               "copy-paste, splicing. Please examine the deviant meaningful blocks \n"
-                               "to make your own opinion about a potential forgery.\n");
-
-
                         /* mark points of the region in the forgery mask */
                         for (int i=0; i<reg_size; i++)
                             forgery[reg_x[i] + reg_y[i]*X] = 255;
                     }
-                    else if (main_grid < 1)
-                        printf("\nNo suspicious traces found in the image "
-                               "with the performed analysis.\n");
-
                 }
             }
 
@@ -421,6 +404,7 @@ void detect_forgery(int * votes, int X, int Y, int main_grid) {
     iio_write_image_int("forgery.png", forgery, X, Y);
     iio_write_image_int("forgery_c.png", forgery_e, X, Y);
 
+
     /* free memory */
     free((void *) forgery);
     free((void *) forgery_d);
@@ -428,6 +412,8 @@ void detect_forgery(int * votes, int X, int Y, int main_grid) {
     free((void *) used);
     free((void *) reg_x);
     free((void *) reg_y);
+
+    return forgery_found;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -439,8 +425,9 @@ int main(int argc, char ** argv) {
     int * votes;
     int X,Y,C;
     int main_grid;
+    int forgery_found;
 
-    if (argc != 2) error("use: zero <image>\nfinds JPEG grid and forgeries");
+    if (argc != 2) error("use: zero <image>\nfinds JPEG grids and forgeries");
 
     input = iio_read_image_double_split(argv[1], &X, &Y, &C);
 
@@ -450,7 +437,25 @@ int main(int argc, char ** argv) {
 
     main_grid = detect_main_grid(votes, X, Y);
 
-    detect_forgery(votes, X, Y, main_grid);
+    if (main_grid != 0)
+        printf("The most meaningful JPEG grid origin is not (0,0).\n"
+               "This may indicate that the image has been cropped.\n");
+
+    if (main_grid == -1)
+        /* main grid not found */
+        printf("No overall JPEG grid found.\n");
+
+    forgery_found = detect_forgery(votes, X, Y, main_grid);
+
+    if (forgery_found == 0)
+        printf("\nNo suspicious traces found in the image "
+               "with the performed analysis.\n");
+    else
+        printf("\nSuspicious traces found in the image.\n"
+               "This may be caused by image manipulations such as resampling, \n"
+               "copy-paste, splicing. Please examine the deviant meaningful region \n"
+               "to make your own opinion about a potential forgery.\n");
+
 
     /* free memory */
     free((void *) input);
