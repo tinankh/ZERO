@@ -1,6 +1,7 @@
 /*----------------------------------------------------------------------------
 
   Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
   Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
@@ -437,7 +438,7 @@ int main(int argc, char ** argv) {
 
     main_grid = detect_main_grid(votes, X, Y);
 
-    if (main_grid != 0)
+    if (main_grid > 0)
         printf("The most meaningful JPEG grid origin is not (0,0).\n"
                "This may indicate that the image has been cropped.\n");
 
@@ -447,10 +448,10 @@ int main(int argc, char ** argv) {
 
     forgery_found = detect_forgery(votes, X, Y, main_grid);
 
-    if (forgery_found == 0)
+    if (forgery_found == 0 && main_grid < 0)
         printf("\nNo suspicious traces found in the image "
                "with the performed analysis.\n");
-    else
+    if (forgery_found != 0)
         printf("\nSuspicious traces found in the image.\n"
                "This may be caused by image manipulations such as resampling, \n"
                "copy-paste, splicing. Please examine the deviant meaningful region \n"
