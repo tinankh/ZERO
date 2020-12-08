@@ -42,7 +42,10 @@ Files
 
 - src/iio.{c,h}: [iio](https://github.com/mnhrdt/iio) code and header.
 
-- create_votemap.py
+- create_votemap.py : Creates a colored vote map.
+```
+python create_votemap.py votes.png
+```
 
 - *.png: Test images.
 
