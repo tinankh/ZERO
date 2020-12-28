@@ -276,20 +276,29 @@ int detect_global_grids(int * votes, int X, int Y) {
 
         lnfa = log_nfa(n, k, p, logNT);
         /* print list of meaningful grids */
-        if (lnfa < 0.0 && i != most_voted_grid) {
+        if (lnfa < 0.0) {
             printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
                    i % 8, i / 8, lnfa);
             printf("There is more than one meaningful grid.\n"
                    "This is suspicious.\n");
         }
-        /* print different message for main grid */
-        if (lnfa < 0.0 && i == most_voted_grid) {
-            printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
-                   most_voted_grid % 8, most_voted_grid / 8, lnfa);
-        }
     }
 
-    return most_voted_grid;
+    /* compute the NFA value of the most voted grid.  votes are
+       correlated by irregular 8x8 blocks dividing by 64 gives a rough
+       count of the number of independent votes */
+    int n = X * Y / 64;
+    int k = grid_votes[most_voted_grid] / 64;
+    lnfa = log_nfa(n, k, p, logNT);
+
+    /* meaningful grid -> main grid found! */
+    if (lnfa < 0.0) {
+        printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
+               most_voted_grid % 8, most_voted_grid / 8, lnfa);
+        return most_voted_grid;
+    }
+
+    return -1;
 }
 
 /*----------------------------------------------------------------------------*/
