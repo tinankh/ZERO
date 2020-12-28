@@ -276,7 +276,7 @@ int detect_global_grids(int * votes, int X, int Y) {
 
         lnfa = log_nfa(n, k, p, logNT);
         /* print list of meaningful grids */
-        if (lnfa < 0.0) {
+        if (lnfa < 0.0 && i!=most_voted_grid) {
             printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
                    i % 8, i / 8, lnfa);
             printf("There is more than one meaningful grid.\n"
