@@ -58,7 +58,7 @@ void error(char * msg) {
 }
 
 /*----------------------------------------------------------------------------*/
-/* memory allocation, print an error and exit if fail.
+/* memory allocation, initialization to 0, print an error and exit if fail.
  */
 void * xcalloc(size_t n_items, size_t size) {
     void * p;
@@ -156,7 +156,7 @@ double log_nfa(int n, int k, double p, double logNT) {
 
 /*----------------------------------------------------------------------------*/
 /* computes the vote map.
-*/
+ */
 int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
     double cos_t[8][8];
     int * zeros;  /* maximal number of zeros found for a given pixel */
@@ -168,10 +168,10 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
             cos_t[k][l] = cos((2.0 * k + 1.0) * l * M_PI / 16.0);
 
     /* initialize zeros and votes */
-    zeros = (int *) xcalloc(X * Y, sizeof(int));
+    /* since xcalloc initializes to 0, no need to do it again for zeros */
+    zeros = (int *) xcalloc(X * Y, sizeof(int)); // initialize zeros to 0
     votes = (int *) xcalloc(X * Y, sizeof(int));
-    for (int n=0; n<X*Y; n++) zeros[n] = 0;
-    for (int n=0; n<X*Y; n++) zeros[n] = -1;
+    for (int n=0; n<X*Y; n++) votes[n] = -1; // initialize votes to -1
 
     /* compute DCT by 8x8 blocks */
 #pragma omp parallel for
@@ -182,11 +182,11 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
             int const_along_y = TRUE;
 
             /* check whether the block is constant along x or y axis */
-            for (int xx=1; xx<8 && (const_along_x || const_along_y); xx++)
-                for (int yy=1; yy<8 && (const_along_x || const_along_y); yy++) {
-                    if (image[x+xx + (y+yy) * X] != image[x+ 0 + (y+yy) * X])
+            for (int xx=0; xx<8 && (const_along_x || const_along_y); xx++)
+                for (int yy=0; yy<8 && (const_along_x || const_along_y); yy++) {
+                    if (image[x+xx + (y+yy) * X] != image[x+0 + (y+yy) * X])
                         const_along_x = FALSE;
-                    if(image[x+xx + (y+yy) * X] != image[x+xx + (y+0) * X])
+                    if (image[x+xx + (y+yy) * X] != image[x+xx + (y+0) * X])
                         const_along_y = FALSE;
                 }
 
@@ -215,31 +215,18 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
 #pragma omp critical
             for (int xx=x; xx<x+8; xx++)
                 for (int yy=y; yy<y+8; yy++) {
-                    /* if two grids are tied in number of zeros, do not vote.
-                       take the abs of the number of zeros as negative numbers
-                       correspond to the number of zeros of blocks constant along
-                       the x or y axis */
-                    if (z == abs(zeros[xx+yy*X]))
+                    /* if two grids are tied in number of zeros, do not vote. */
+                    if (z == zeros[xx+yy*X])
                         votes[xx+yy*X] = -1;
 
-                    /* update votes when the current grid has more zeros.
-                       take the abs of the number of zeros as negative numbers
-                       correspond to the number of zeros of blocks constant along
-                       the x or y axis */
-                    if (z > abs(zeros[xx+yy*X])) {
-                        /* the number of zeros is put to negative to indicate
-                           a block contant along x or y axis */
-                        zeros[xx+yy*X] = const_along_x || const_along_y ? -z : z;
-                        votes[xx+yy*X] = (x % 8) + (y % 8) * 8;
+                    /* update votes when the current grid has more zeros. */
+                    if (z > zeros[xx+yy*X]) {
+                        zeros[xx+yy*X] = z;
+                        votes[xx+yy*X] = const_along_x || const_along_y ? -1
+                            : (x % 8) + (y % 8) * 8;
                     }
                 }
         }
-
-    /* remove votes that came from blocks constant along x or y axis */
-    for (int x=0; x<X; x++)
-        for (int y=0; y<Y; y++)
-            if (zeros[x+y*X] < 0)
-                votes[x+y*X] = -1;
 
     /* store zeros and votes */
     iio_write_image_int("votes.png", votes, X, Y);
@@ -252,8 +239,8 @@ int * compute_grid_votes_per_pixel(double * image, int X, int Y) {
 
 /*----------------------------------------------------------------------------*/
 /* detect the main grid of the image from the vote map.
-*/
-int detect_main_grid(int * votes, int X, int Y) {
+ */
+int detect_global_grids(int * votes, int X, int Y) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     int grid_votes[64];
     int max_votes = 0;
@@ -279,26 +266,35 @@ int detect_main_grid(int * votes, int X, int Y) {
                 }
             }
 
-    /* compute the NFA value of the most voted grid.  votes are
+
+    /* compute the NFA value for all the significant grids.  votes are
        correlated by irregular 8x8 blocks dividing by 64 gives a rough
        count of the number of independent votes */
-    int n = X * Y / 64;
-    int k = grid_votes[most_voted_grid] / 64;
-    lnfa = log_nfa(n, k, p, logNT);
+    for (int i=0; i<64; i++) {
+        int n = X * Y / 64;
+        int k = grid_votes[i] / 64;
 
-    /* meaningful grid -> main grid found! */
-    if (lnfa < 0.0) {
-        printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
-               most_voted_grid % 8, most_voted_grid / 8, lnfa);
-        return most_voted_grid;
+        lnfa = log_nfa(n, k, p, logNT);
+        /* print list of meaningful grids */
+        if (lnfa < 0.0 && i != most_voted_grid) {
+            printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
+                   i % 8, i / 8, lnfa);
+            printf("There is more than one meaningful grid.\n"
+                   "This is suspicious.\n");
+        }
+        /* print different message for main grid */
+        if (lnfa < 0.0 && i == most_voted_grid) {
+            printf("main grid: #%d [%d %d] log(nfa) = %g\n", most_voted_grid,
+                   most_voted_grid % 8, most_voted_grid / 8, lnfa);
+        }
     }
 
-    return -1;
+    return most_voted_grid;
 }
 
 /*----------------------------------------------------------------------------*/
 /* creates forgery masks: detects zones which have grids different from the main grid.
-*/
+ */
 int detect_forgery(int * votes, int X, int Y, int main_grid) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     double p = 1.0 / 64.0;
@@ -313,7 +309,7 @@ int detect_forgery(int * votes, int X, int Y, int main_grid) {
                    A meaningful forgery must have a density of votes of at least
                    1/64. thus, its votes should not be in mean further away one
                    from another than a distance of 8.
-                   we use a little more to allow for some variation in the
+                   one could use a little more to allow for some variation in the
                    distribution. */
 
     /* miminal block size that can lead to a meaningful detection */
@@ -326,9 +322,10 @@ int detect_forgery(int * votes, int X, int Y, int main_grid) {
     used = (int *) xcalloc(X * Y, sizeof(int));
     reg_x = (int *) xcalloc(X * Y, sizeof(int));
     reg_y = (int *) xcalloc(X * Y, sizeof(int));
-    for (int i=0; i<X*Y; i++) forgery[i] = 0;
-    for (int i=0; i<X*Y; i++) forgery_d[i] = 0;
-    for (int i=0; i<X*Y; i++) forgery_e[i] = 0;
+
+    /* for (int i=0; i<X*Y; i++) forgery[i] = 0; */
+    /* for (int i=0; i<X*Y; i++) forgery_d[i] = 0; */
+    /* for (int i=0; i<X*Y; i++) forgery_e[i] = 0; */
     for (int i=0; i<X*Y; i++) used[i] = FALSE;
 
     /* region growing of zones that voted for other than the main grid */
@@ -367,6 +364,10 @@ int detect_forgery(int * votes, int X, int Y, int main_grid) {
                 if (reg_size >= min_size) {
                     int N = MAX(x1 - x0 + 1, y1 - y0 + 1);
                     int n = N * N / 64;
+
+                    /* REMOVE BOUNDING BOX, test cattle */
+                    /* int n = (x1 - x0 + 1) * (y1 - y0 + 1)/64; */
+
                     int k = reg_size / 64;
                     double lnfa = log_nfa( n, k, p, logNT );
 
@@ -402,11 +403,13 @@ int detect_forgery(int * votes, int X, int Y, int main_grid) {
                         forgery_e[xx+yy*X] = 0;
 
     /* store forgery detection outputs */
+    /* iio_write_image_double("logNFA_map.png", logNFA_map, X, Y); */
     iio_write_image_int("forgery.png", forgery, X, Y);
     iio_write_image_int("forgery_c.png", forgery_e, X, Y);
 
 
     /* free memory */
+    /* free((void *) logNFA_map); */
     free((void *) forgery);
     free((void *) forgery_d);
     free((void *) forgery_e);
@@ -436,7 +439,7 @@ int main(int argc, char ** argv) {
 
     votes = compute_grid_votes_per_pixel(image, X, Y);
 
-    main_grid = detect_main_grid(votes, X, Y);
+    main_grid = detect_global_grids(votes, X, Y);
 
     if (main_grid > 0)
         printf("The most meaningful JPEG grid origin is not (0,0).\n"
@@ -448,7 +451,7 @@ int main(int argc, char ** argv) {
 
     forgery_found = detect_forgery(votes, X, Y, main_grid);
 
-    if (forgery_found == 0 && main_grid < 0)
+    if (forgery_found == 0 && main_grid < 1)
         printf("\nNo suspicious traces found in the image "
                "with the performed analysis.\n");
     if (forgery_found != 0)
