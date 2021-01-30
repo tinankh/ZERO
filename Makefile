@@ -17,28 +17,22 @@ test: zero
 	@echo test on roma.png
 	@echo ----------------
 	./zero roma.png
-	@mv forgery.png roma_forgery.png
 	@echo
 	@echo test on pelican.png
 	@echo -------------------
 	./zero pelican.png
-	@mv forgery.png pelican_forgery.png
 	@echo
 	@echo test on tampered1.png
 	@echo ---------------------
 	./zero tampered1.png
-	@mv forgery.png tampered1_forgery.png
 	@echo
 	@echo test on tampered2.png
 	@echo ---------------------
 	./zero tampered2.png
-	@mv forgery.png tampered2_forgery.png
 
 clean:
 
 	rm -f zero
 	rm -f votes.png forgery.png forgery_c.png
-	rm -f roma_forgery.png pelican_forgery.png
-	rm -f tampered1_forgery.png tampered2_forgery.png
 
 .PHONY: clean

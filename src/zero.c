@@ -84,8 +84,8 @@ void rgb2luminance(double * input, double * output, int X, int Y, int C) {
                     + 0.114 * input[x + y*X + 2*X*Y];
     }
     else
-        output = input;
-        /* memcpy(output, input, X*Y*sizeof(double)); */
+        /* output = input; */
+        memcpy(output, input, X*Y*sizeof(double));
 
     /* return; */
 }
@@ -473,7 +473,9 @@ int main(int argc, char ** argv) {
     if (forgery_found == 0 && main_grid < 1)
         printf("\nNo suspicious traces found in the image "
                "with the performed analysis.\n");
+
     if (forgery_found != 0) {
+
         /* store forgery detection outputs */
         iio_write_image_int("forgery.png", forgery, X, Y);
         iio_write_image_int("forgery_c.png", forgery_e, X, Y);
