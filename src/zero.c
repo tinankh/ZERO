@@ -167,10 +167,11 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y) {
         for (int l=0; l<8; l++)
             cos_t[k][l] = cos((2.0 * k + 1.0) * l * M_PI / 16.0);
 
-    /* initialize zeros and votes */
-    /* since xcalloc initializes to 0, no need to do it again for zeros */
-    /* initialize votes */
+    /* initialize zero to 0 with calloc */
     zeros = (int *) xcalloc(X * Y, sizeof(int));
+
+    /* initialize votes to -1 */
+    for (int n=0; n<X*Y; n++) votes[n] = -1; // initialize votes to -1
 
     /* compute DCT by 8x8 blocks */
 #pragma omp parallel for
@@ -280,16 +281,24 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
     return -1;
 }
 
+
+/* Structure for local forgeries */
+struct meaningful_reg {
+    int x0, y0, x1, y1;
+    int grid;
+    double lnfa;
+};
+
 /*----------------------------------------------------------------------------*/
 /* detects zones which have grids different from the main grid.
  */
-int detect_forgery(int * votes, int * forgery, int * forgery_e, int X, int Y, int main_grid) {
+int detect_forgery(int * votes, int * forgery, int * forgery_e,
+                   struct meaningful_reg * forged_regions,
+                   int X, int Y, int main_grid) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     double p = 1.0 / 64.0;
     int forgery_found = 0; // initialized at false
-    /* int * forgery; */
     int * forgery_d;
-    /* int * forgery_e; */
     int * used;
     int * reg_x;
     int * reg_y;
@@ -314,7 +323,8 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e, int X, int Y, in
     /* region growing of zones that voted for other than the main grid */
     for (int x=0; x<X; x++)
         for (int y=0; y<Y; y++)
-            if (used[x+y*X] == FALSE && votes[x+y*X] != main_grid && votes[x+y*X] >= 0) {
+            if (used[x+y*X] == FALSE && votes[x+y*X] != main_grid
+                && votes[x+y*X] >= 0) {
                 /* initialize region with the seed pixel */
                 int reg_size = 0;
                 int grid = votes[x+y*X];
@@ -332,7 +342,8 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e, int X, int Y, in
                     for (int xx=reg_x[i]-W; xx<=reg_x[i]+W; xx++)
                         for (int yy=reg_y[i]-W; yy<=reg_y[i]+W; yy++)
                             if (xx >=0 && xx < X && yy >= 0 && yy < Y)
-                                if (used[xx+yy*X] == FALSE && votes[xx+yy*X] == grid) {
+                                if (used[xx+yy*X] == FALSE
+                                    && votes[xx+yy*X] == grid) {
                                     used[xx+yy*X] = TRUE;
                                     reg_x[reg_size] = xx;
                                     reg_y[reg_size] = yy;
@@ -355,14 +366,14 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e, int X, int Y, in
                     double lnfa = log_nfa( n, k, p, logNT );
 
                     if (lnfa < 0.0) { /* meaningful grid different from the main found */
+                        forged_regions[forgery_found].x0 = x0;
+                        forged_regions[forgery_found].x1 = x1;
+                        forged_regions[forgery_found].y0 = y0;
+                        forged_regions[forgery_found].y1 = y1;
+                        forged_regions[forgery_found].grid = grid;
+                        forged_regions[forgery_found].lnfa = lnfa;
+
                         forgery_found ++;
-                        if (main_grid != -1)
-                            printf("\nA meaningful grid different from the main one was found here: ");
-                        else
-                            printf("\nA grid was found here: ");
-                        printf("%d %d - %d %d [%dx%d]", x0, y0, x1, y1, x1-x0+1, y1-y0+1);
-                        printf("\ngrid: #%d [%d %d] ", grid, grid % 8, grid / 8 );
-                        printf("n %d k %d log(nfa) = %g\n",n,k,lnfa);
 
                         /* mark points of the region in the forgery mask */
                         for (int i=0; i<reg_size; i++)
@@ -408,10 +419,11 @@ int main(int argc, char ** argv) {
     double lnfa_grids[64] = {0.0};
     int main_grid = -1;
     int global_grids = 0;
+    int forgery_found = 0;
+    struct meaningful_reg * forged_regions;
     int * forgery;
     int * forgery_e;
 
-    int forgery_found;
 
     if (argc != 2) error("use: zero <image>\nfinds JPEG grids and forgeries");
 
@@ -422,16 +434,12 @@ int main(int argc, char ** argv) {
 
     rgb2luminance(input, image, X, Y, C);
     iio_write_image_double("luminance.png", image, X, Y);
-    printf("Luminance image created\n");
 
     /* compute vote map */
     votes = (int *) xcalloc(X * Y, sizeof(int));
-    for (int n=0; n<X*Y; n++) votes[n] = -1; // initialize votes to -1
 
     compute_grid_votes_per_pixel(image, votes, X, Y);
     iio_write_image_int("votes.png", votes, X, Y);
-    printf("Vote map created\n");
-
 
     /* detect global grids and main_grid */
     main_grid = detect_global_grids(votes, lnfa_grids, X, Y);
@@ -463,18 +471,35 @@ int main(int argc, char ** argv) {
         printf("There is more than one meaningful grid.\n"
                "This is suspicious.\n");
 
+    /* compute forged regions, TODO: how to fill it?  */
+    forged_regions = (struct meaningful_reg *) xcalloc(X*Y, sizeof(struct meaningful_reg));
+
     /* compute forgery masks */
     forgery = (int *) xcalloc(X * Y, sizeof(int));
     forgery_e = (int *) xcalloc(X * Y, sizeof(int));
 
     /* look for local significant grids different from the main one */
-    forgery_found = detect_forgery(votes, forgery, forgery_e, X, Y, main_grid);
+    forgery_found = detect_forgery(votes, forgery, forgery_e, forged_regions,
+                                   X, Y, main_grid);
 
     if (forgery_found == 0 && main_grid < 1)
         printf("\nNo suspicious traces found in the image "
                "with the performed analysis.\n");
 
     if (forgery_found != 0) {
+        for (int i=0; i<forgery_found; i++) {
+            if (main_grid != -1)
+                printf("\nA meaningful grid different from the main one was found here: ");
+            else
+                printf("\nA grid was found here: ");
+            printf("%d %d - %d %d [%dx%d]", forged_regions[i].x0, forged_regions[i].y0,
+                   forged_regions[i].x1, forged_regions[i].y1,
+                   forged_regions[i].x1-forged_regions[i].x0+1,
+                   forged_regions[i].y1-forged_regions[i].y0+1);
+            printf("\ngrid: #%d [%d %d] ", forged_regions[i].grid,
+                   forged_regions[i].grid % 8, forged_regions[i].grid / 8 );
+            printf("log(nfa) = %g\n",forged_regions[i].lnfa);
+        }
 
         /* store forgery detection outputs */
         iio_write_image_int("forgery.png", forgery, X, Y);
@@ -490,6 +515,7 @@ int main(int argc, char ** argv) {
     free((void *) input);
     free((void *) image);
     free((void *) votes);
+    free((void *) forged_regions);
     free((void *) forgery);
     free((void *) forgery_e);
 

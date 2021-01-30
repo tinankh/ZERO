@@ -31,7 +31,6 @@ test: zero
 	./zero tampered2.png
 
 clean:
-
 	rm -f zero
 	rm -f votes.png forgery.png forgery_c.png
 
