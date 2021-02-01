@@ -283,17 +283,17 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
 
 
 /* Structure for local forgeries */
-struct meaningful_reg {
+typedef struct {
     int x0, y0, x1, y1;
     int grid;
     double lnfa;
-};
+}  meaningful_reg;
 
 /*----------------------------------------------------------------------------*/
 /* detects zones which have grids different from the main grid.
  */
 int detect_forgery(int * votes, int * forgery, int * forgery_e,
-                   struct meaningful_reg * forged_regions,
+                   meaningful_reg * forged_regions,
                    int X, int Y, int main_grid) {
     double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
     double p = 1.0 / 64.0;
@@ -408,6 +408,7 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e,
     return forgery_found;
 }
 
+#if 0
 /*----------------------------------------------------------------------------*/
 /*                                    Main                                    */
 /*----------------------------------------------------------------------------*/
@@ -420,7 +421,7 @@ int main(int argc, char ** argv) {
     int main_grid = -1;
     int global_grids = 0;
     int forgery_found = 0;
-    struct meaningful_reg * forged_regions;
+    meaningful_reg * forged_regions;
     int * forgery;
     int * forgery_e;
 
@@ -472,7 +473,7 @@ int main(int argc, char ** argv) {
                "This is suspicious.\n");
 
     /* compute forged regions, TODO: how to fill it?  */
-    forged_regions = (struct meaningful_reg *) xcalloc(X*Y, sizeof(struct meaningful_reg));
+    forged_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
 
     /* compute forgery masks */
     forgery = (int *) xcalloc(X * Y, sizeof(int));
@@ -498,7 +499,7 @@ int main(int argc, char ** argv) {
                    forged_regions[i].y1-forged_regions[i].y0+1);
             printf("\ngrid: #%d [%d %d] ", forged_regions[i].grid,
                    forged_regions[i].grid % 8, forged_regions[i].grid / 8 );
-            printf("log(nfa) = %g\n",forged_regions[i].lnfa);
+            printf("log(nfa) = %g\n", forged_regions[i].lnfa);
         }
 
         /* store forgery detection outputs */
@@ -524,3 +525,4 @@ int main(int argc, char ** argv) {
     return EXIT_SUCCESS;
 }
 /*----------------------------------------------------------------------------*/
+#endif
