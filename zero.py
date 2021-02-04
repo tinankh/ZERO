@@ -2,8 +2,6 @@ import iio
 import cffi
 import numpy as np
 
-# gcc -shared src/zero.c -o libzero.so -lm -fPIC -O3
-
 ffi = cffi.FFI()
 ffi.cdef('''
 void rgb2luminance(double * input, double * output, int X, int Y, int C);
@@ -24,8 +22,6 @@ def P(array):
     typestr = 'double*'
     if array.dtype == np.float32:
         typestr = 'float*'
-    # elif array.dtype == np.int:
-    #     typestr = 'int*'
     elif array.dtype == np.bool:
         typestr = 'bool*'
     elif array.dtype == np.int32:
@@ -98,4 +94,3 @@ def main(filename):
 if __name__ == '__main__':
     import fire
     fire.Fire(main)
-
