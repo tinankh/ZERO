@@ -1,19 +1,18 @@
-EXEC=./zero
-SRCDIR=src
 CFLAGS=-std=gnu99 -O3
-Lib=-lpng -ltiff -ljpeg -lm $(OpenMP)
-SRC_FILES=$(wildcard $(SRCDIR)/*.c)
+LIB=-lpng -ltiff -ljpeg -lm $(OpenMP)
+SRC_FILES=$(wildcard src/*.c)
 
-all: $(EXEC)
 
-$(EXEC): $(SRC_FILES)
+all: zero
+
+zero: $(SRC_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
 
 openmp: OpenMP=-fopenmp
 openmp: zero
 
-libzero: $(SRCDIR)/zero.c
-	$(CC) -shared $^ -o $@.so -lm -fPIC -O3 -fopenmp
+libzero: src/zero.c src/iio.c
+	$(CC) -shared $^ -o $@.so -lm -fPIC -O3 -fopenmp $(LIB)
 
 test: zero
 	@echo
