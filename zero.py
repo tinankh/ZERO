@@ -1,6 +1,8 @@
 import iio
 import cffi
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 ffi = cffi.FFI()
 ffi.cdef('''
@@ -17,6 +19,24 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e, meaningful_reg *
 ''')
 
 libzero = ffi.dlopen('./libzero.so')
+
+cmap1 = plt.get_cmap('tab20')
+cmap2 = plt.get_cmap('tab20b')
+cmap3 = plt.get_cmap('tab20c')
+cmap4 = plt.get_cmap('Set3')
+
+def colormap(v):
+    v = v.copy()
+    # swap 0 and 4 so that 0 is colored with green
+    v0 = v == 0
+    v4 = v == 4
+    v[v0] = 4
+    v[v4] = 0
+    v2 = cmap1(v/20)
+    v2[v >= 20] = cmap2((v[v >= 20] - 20)/20)
+    v2[v >= 40] = cmap3((v[v >= 40] - 40)/20)
+    v2[v >= 60] = cmap4((v[v >= 60] - 60)/20)
+    return v2
 
 def P(array):
     typestr = 'double*'
@@ -35,11 +55,10 @@ def main(filename):
 
     print('1. convert to luminance\n')
     if c == 3:
-        im = image[:,:,0] * 299/1000 + image[:,:,1] * 587/1000 + image[:,:,2] * 114/1000
+        im = image[:,:,0] * 299/1000 + image[:,:,1] * 587/1000
+        + image[:,:,2] * 114/1000
     else:
         im = image[:,:,0]
-
-    # libzero.rgb2luminance(P(image), P(im), w, h, c)
 
     iio.write('luminance.png', im)
 
@@ -47,20 +66,29 @@ def main(filename):
     votes = np.zeros(im.shape, dtype=np.int32)
     libzero.compute_grid_votes_per_pixel(P(im), P(votes), w, h)
 
-    iio.write('votemap.png', votes)
+    # iio.write('votemap.png', votes)
+
+    print('2bis. color vote map\n')
+
+    colored_votes = 255 * colormap(votes)[...,:3]
+    colored_votes[votes == -1] = 0
+
+    colored_votes = colored_votes.astype(np.uint8)
+
+    iio.write('colored_votemap.png', colored_votes)
 
     print('3. detect global grids\n')
     lnfa_grids = np.zeros((8, 8), dtype=np.float64)
     main_grid = libzero.detect_global_grids(P(votes), P(lnfa_grids), w, h)
 
     if main_grid == -1:
-        print('No overall JPEG grid found')
+        print('No overall JPEG grid found') # this means the image has no detectable JPEG traces
     else:
         print("main grid is " + str(main_grid%8) + "," + str(int(main_grid/8)) )
 
     if main_grid > 0:
         print('The most meaningful JPEG grid origin is not (0,0).\n'
-               'This may indicate that the image has been cropped.\n')
+               'This may indicate that the image has been cropped.\n') # this means that the grid is not aligned
 
     for i in range(64):
         if lnfa_grids[int(i/8)][i%8] < 0.0:
@@ -85,9 +113,11 @@ def main(filename):
             print("grid was found here: " + str(forged_region[i].x0) + " "
                   + str(forged_region[i].y0) + " - " + str(forged_region[i].x1) + " "
                   + str(forged_region[i].y1))
-            print("\ngrid is " + str(forged_region[i].grid%8) + "," + str(int(forged_region[i].grid/8))
+            print("\ngrid is " + str(forged_region[i].grid%8) + ","
+                  + str(int(forged_region[i].grid/8))
                   + " with log(nfa) = " + str(forged_region[i].lnfa))
-        iio.write('forgery.png', forgery_c)
+
+    iio.write('forgery.png', forgery_c) # all black if no forgeries
 
     print('\nok')
 
