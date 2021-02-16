@@ -47,6 +47,8 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e,
                    meaningful_reg * forged_regions,
                    int X, int Y, int main_grid);
 
-
+void zero(double * input, double * image, int * votes, double * lnfa_grids,
+         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+         int X, int Y, int C);
 
 #endif

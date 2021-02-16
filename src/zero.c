@@ -398,3 +398,81 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e,
 
     return forgery_found;
 }
+
+
+
+/*----------------------------------------------------------------------------*/
+/* detects zones which have grids different from the main grid.
+ */
+void zero(double * input, double * image, int * votes, double * lnfa_grids,
+         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+         int X, int Y, int C) {
+
+    int main_grid = -1;
+    int global_grids = 0;
+    int forgery_found = 0;
+
+    /* luminance image */
+    rgb2luminance(input, image, X, Y, C);
+
+    /* compute vote map */
+    compute_grid_votes_per_pixel(image, votes, X, Y);
+
+    /* detect global grids and main_grid */
+    main_grid = detect_global_grids(votes, lnfa_grids, X, Y);
+
+    if (main_grid > -1) {
+        /* print main grid */
+        printf("main grid: #%d [%d %d] log(nfa) = %g\n", main_grid,
+               main_grid % 8, main_grid / 8, lnfa_grids[main_grid]);
+        global_grids++;
+    }
+    if (main_grid == -1)
+        /* main grid not found */
+        printf("No overall JPEG grid found.\n");
+
+    if (main_grid > 0)
+        printf("The most meaningful JPEG grid origin is not (0,0).\n"
+               "This may indicate that the image has been cropped.\n");
+
+    for (int i=0; i<64; i++) {
+        /* print list of meaningful grids */
+        if (lnfa_grids[i] < 0.0 && i != main_grid) {
+            printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
+                   i % 8, i / 8, lnfa_grids[i]);
+            global_grids++;
+        }
+    }
+
+    if (global_grids > 1)
+        printf("There is more than one meaningful grid.\n"
+               "This is suspicious.\n");
+
+    /* compute forged regions */
+    forgery_found = detect_forgery(votes, forgery, forgery_e, forged_regions,
+                                   X, Y, main_grid);
+
+    if (forgery_found == 0 && main_grid < 1)
+        printf("\nNo suspicious traces found in the image "
+               "with the performed analysis.\n");
+
+    if (forgery_found != 0) {
+        for (int i=0; i<forgery_found; i++) {
+            if (main_grid != -1)
+                printf("\nA meaningful grid different from the main one was found here: ");
+            else
+                printf("\nA grid was found here: ");
+            printf("%d %d - %d %d [%dx%d]", forged_regions[i].x0, forged_regions[i].y0,
+                   forged_regions[i].x1, forged_regions[i].y1,
+                   forged_regions[i].x1-forged_regions[i].x0+1,
+                   forged_regions[i].y1-forged_regions[i].y0+1);
+            printf("\ngrid: #%d [%d %d] ", forged_regions[i].grid,
+                   forged_regions[i].grid % 8, forged_regions[i].grid / 8 );
+            printf("log(nfa) = %g\n", forged_regions[i].lnfa);
+        }
+        printf("\nSuspicious traces found in the image.\n"
+               "This may be caused by image manipulations such as resampling, \n"
+               "copy-paste, splicing. Please examine the deviant meaningful region \n"
+               "to make your own opinion about a potential forgery.\n");
+    }
+}
