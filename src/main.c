@@ -36,6 +36,9 @@ int main(int argc, char ** argv) {
     meaningful_reg * forged_regions;
     int * forgery;
     int * forgery_e;
+    int main_grid = -1;
+    FILE *maingrid_file;
+    maingrid_file = fopen("main_grid.txt", "w");
 
     if (argc != 2) error("use: zero <image>\nfinds JPEG grids and forgeries");
 
@@ -55,12 +58,15 @@ int main(int argc, char ** argv) {
     forgery_e = (int *) xcalloc(X * Y, sizeof(int));
 
     /* run algorithm */
-    zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
+    main_grid = zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
 
     /* store vote map and forgery detection outputs */
+    fprintf(maingrid_file, "%d", main_grid);
     iio_write_image_int("votes.png", votes, X, Y);
     iio_write_image_int("forgery.png", forgery, X, Y);
     iio_write_image_int("forgery_c.png", forgery_e, X, Y);
+
+    fclose(maingrid_file);
 
     /* free memory */
     free((void *) input);
@@ -69,8 +75,6 @@ int main(int argc, char ** argv) {
     free((void *) forged_regions);
     free((void *) forgery);
     free((void *) forgery_e);
-
-
 
     return EXIT_SUCCESS;
 }

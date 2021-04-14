@@ -228,6 +228,21 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y) {
                 }
         }
 
+    /* set pixels on the border to non valid votes - only pixels that
+       belong to the 64 full 8x8 blocks inside the image can vote */
+    for (int xx=0; xx<X; xx++) {
+        for (int yy=0; yy<7; yy++)
+            votes[xx+yy*X] = -1;
+        for (int yy=Y-7; yy<Y; yy++)
+            votes[xx+yy*X] = -1;
+    }
+    for (int yy=0; yy<Y; yy++) {
+        for (int xx=0; xx<7; xx++)
+            votes[xx+yy*X] = -1;
+        for (int xx=X-7; xx<X; xx++)
+            votes[xx+yy*X] = -1;
+    }
+
     /* free memory */
     free((void *) zeros);
 }
@@ -236,7 +251,7 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y) {
 /* detect the main grid of the image from the vote map.
  */
 int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
-    double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
+    double logNT = log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     int grid_votes[64];
     int max_votes = 0;
     int most_voted_grid = -1;
@@ -286,7 +301,7 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
 int detect_forgery(int * votes, int * forgery, int * forgery_e,
                    meaningful_reg * forged_regions,
                    int X, int Y, int main_grid) {
-    double logNT = log10(64.0) + 1.5 * log10(X) + 1.5 * log10(Y);
+    double logNT = log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     double p = 1.0 / 64.0;
     int forgery_found = 0; // initialized at false
     int * forgery_d;
@@ -347,12 +362,7 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e,
 
                 /* compute NFA for regions with at least the minimal size */
                 if (reg_size >= min_size) {
-                    int N = MAX(x1 - x0 + 1, y1 - y0 + 1);
-                    int n = N * N / 64;
-
-                    /* REMOVE BOUNDING BOX, test cattle */
-                    /* int n = (x1 - x0 + 1) * (y1 - y0 + 1)/64; */
-
+                    int n = (x1 - x0 + 1) * (y1 - y0 + 1) / 64;
                     int k = reg_size / 64;
                     double lnfa = log_nfa( n, k, p, logNT );
 
@@ -404,7 +414,7 @@ int detect_forgery(int * votes, int * forgery, int * forgery_e,
 /*----------------------------------------------------------------------------*/
 /* detects zones which have grids different from the main grid.
  */
-void zero(double * input, double * image, int * votes, double * lnfa_grids,
+int zero(double * input, double * image, int * votes, double * lnfa_grids,
          meaningful_reg * forged_regions, int * forgery, int *forgery_e,
          int X, int Y, int C) {
 
@@ -475,4 +485,5 @@ void zero(double * input, double * image, int * votes, double * lnfa_grids,
                "copy-paste, splicing. Please examine the deviant meaningful region \n"
                "to make your own opinion about a potential forgery.\n");
     }
+    return main_grid;
 }
