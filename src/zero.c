@@ -75,7 +75,6 @@ void * xcalloc(size_t n_items, size_t size) {
 /* convert rgb image to luminance.
  */
 void rgb2luminance(double * input, double * output, int X, int Y, int C) {
-    /* double * output; */
     if (C >= 3) {
         for (int x=0; x<X; x++)
             for(int y=0; y<Y; y++)
@@ -84,10 +83,7 @@ void rgb2luminance(double * input, double * output, int X, int Y, int C) {
                     + 0.114 * input[x + y*X + 2*X*Y];
     }
     else
-        /* output = input; */
         memcpy(output, input, X*Y*sizeof(double));
-
-    /* return; */
 }
 
 /*----------------------------------------------------------------------------*/

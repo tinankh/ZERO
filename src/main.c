@@ -61,6 +61,8 @@ int main(int argc, char ** argv) {
     main_grid = zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
 
     /* store vote map and forgery detection outputs */
+    /* iio_write_image_double("luminance.png", image, X, Y); */
+
     fprintf(maingrid_file, "%d", main_grid);
     iio_write_image_int("votes.png", votes, X, Y);
     iio_write_image_int("forgery.png", forgery, X, Y);
