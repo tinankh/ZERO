@@ -43,12 +43,16 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y);
 
 int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y);
 
-int detect_forgery(int * votes, int * forgery, int * forgery_e,
+int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
                    meaningful_reg * forged_regions,
                    int X, int Y, int main_grid);
+
+int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
+                   meaningful_reg * forged_regions, int X, int Y);
 
 int zero(double * input, double * image, int * votes, double * lnfa_grids,
          meaningful_reg * forged_regions, int * forgery, int *forgery_e,
          int X, int Y, int C);
+
 
 #endif

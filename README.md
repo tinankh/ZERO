@@ -74,40 +74,47 @@ This should print the following message:
 test on roma.png
 ----------------
 ./zero roma.png
-no overall JPEG grid found
+No overall JPEG grid found.
+
+No suspicious traces found in the image with the performed analysis.
 
 test on pelican.png
 -------------------
 ./zero pelican.png
-main grid: #6 [6 0] log(nfa) = -6821.13
+main grid: #6 [6 0] log(nfa) = -6341.93
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
 test on tampered1.png
 ---------------------
 ./zero tampered1.png
-no overall JPEG grid found
+No overall JPEG grid found.
 
-A grid was found here: 104 94 - 153 159 [50x66]
-grid: #0 [0 0] n 68 k 30 log(nfa) = -25.2505
+A grid was found here:
+104 94 - 153 159 [50x66]
+grid: #0 [0 0]
+log(nfa) = -25.8163
 
-This may be caused
-by image manipulations such as resampling, copy-paste, splicing.
-Please examine the deviant meaningful blocks to make your own opinion about a potential forgery.
+Suspicious traces found in the image.
+This may be caused by image manipulations such as resampling,
+copy-paste, splicing. Please examine the deviant meaningful region
+to make your own opinion about a potential forgery.
 
 test on tampered2.png
 ---------------------
 ./zero tampered2.png
-main grid: #6 [6 0] log(nfa) = -6615.48
+main grid: #6 [6 0] log(nfa) = -6157.66
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
 A meaningful grid different from the main one was found here: 330 68 - 401 104 [72x37]
-grid: #34 [2 4] n 81 k 36 log(nfa) = -32.2729
+grid: #34 [2 4]
+log(nfa) = -44.7316
 
-This may be caused
-by image manipulations such as resampling, copy-paste, splicing.
-Please examine the deviant meaningful blocks to make your own opinion about a potential forgery.
+Suspicious traces found in the image.
+This may be caused by image manipulations such as resampling,
+copy-paste, splicing. Please examine the deviant meaningful region
+to make your own opinion about a potential forgery.
 ```
 
 
