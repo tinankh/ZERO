@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.util import view_as_blocks
 import scipy as sp
-import sys
-import scipy.fft
-
+# import sys
+# import scipy.fft
+import os
 
 ffi = cffi.FFI()
 ffi.cdef('''
@@ -107,6 +107,7 @@ def main(filename):
     print('\n4. detect forgeries\n')
     forgery = np.zeros(im.shape, dtype=np.int32)
     forgery_c = np.zeros(im.shape, dtype=np.int32)
+    forgery_result = np.zeros(im.shape, dtype=np.int32)
 
     forged_region = ffi.new('meaningful_reg[]', w*h)
     forgery_found = libzero.detect_foreign_grids(P(votes), P(forgery), P(forgery_c),
@@ -166,12 +167,13 @@ def main(filename):
                       + str(forged_region[i].y0) + " - " + str(forged_region[i].x1) + " "
                       + str(forged_region[i].y1))
                 print("with log(nfa) = " + str(forged_region[i].lnfa))
-
-                forgery_c2 = np.pad(forgery_c2[:-shift_x,:-shift_y], [(shift_x,0),(shift_y,0)])
-
-                forgery = forgery_c + 0.5*forgery_c2
-                forgery_c = np.clip(forgery, 0, 255)
-    iio.write('result_zero.png', forgery_c) # all black if no forgeries
+                forgery_c2 = np.pad(forgery_c2[:-shift_x or None,:-shift_y or None],
+                                    [(shift_x,0),(shift_y,0)])
+                forgery = forgery_c  + 0.5*forgery_c2
+                forgery_result = np.clip(forgery, 0, 255)
+    else:
+        forgery_result = forgery_c
+    iio.write('result_zero.png', forgery_result) # all black if no forgeries
 
     print('\nok')
 
