@@ -122,6 +122,7 @@ def main(filename):
                   + str(int(forged_region[i].grid/8))
                   + " with log(nfa) = " + str(forged_region[i].lnfa))
 
+    forgery_result = forgery_c
     # do the rest only if main grid is detected
     shift_x = (main_grid%8 + 4)%8
     shift_y = (int(main_grid/8) + 4)%8
@@ -171,8 +172,7 @@ def main(filename):
                                     [(shift_x,0),(shift_y,0)])
                 forgery = forgery_c  + 0.5*forgery_c2
                 forgery_result = np.clip(forgery, 0, 255)
-        else:
-            forgery_result = forgery_c
+
     iio.write('result_zero.png', forgery_result) # all black if no forgeries
 
     print('\nok')
