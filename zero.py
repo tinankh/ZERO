@@ -171,8 +171,8 @@ def main(filename):
                                     [(shift_x,0),(shift_y,0)])
                 forgery = forgery_c  + 0.5*forgery_c2
                 forgery_result = np.clip(forgery, 0, 255)
-    else:
-        forgery_result = forgery_c
+        else:
+            forgery_result = forgery_c
     iio.write('result_zero.png', forgery_result) # all black if no forgeries
 
     print('\nok')
