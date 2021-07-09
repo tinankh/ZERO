@@ -7,8 +7,8 @@ a local JPEG grid origin detector based on the number of zeros, a forgery detect
 Version 3 - July 2021
 
 by Tina Nikoukhah <tinanikoukhah@gmail.com>
-and Jérémy Anger <anger@cmla.ens-cachan.fr>
-and Rafael Grompone von Gioi <grompone@cmla.ens-cachan.fr>
+and Jérémy Anger <anger@ens-paris-saclay.fr>
+and Rafael Grompone von Gioi <grompone@ens-paris-saclay.fr>
 
 
 Introduction
@@ -132,9 +132,9 @@ to make your own opinion about a potential forgery.
 Copyright and License
 ---------------------
 
-Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
-Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
-Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
+Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
+Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
 
 
 ZERO is free software: you can redistribute it and/or modify
