@@ -4,7 +4,7 @@ ZERO
 a local JPEG grid origin detector based on the number of zeros, a forgery detection tool
 ================================================
 
-Version 2 - August 2020
+Version 3 - July 2021
 
 by Tina Nikoukhah <tinanikoukhah@gmail.com>
 and Jérémy Anger <anger@cmla.ens-cachan.fr>
@@ -32,7 +32,9 @@ Online Demo
 Files
 -----
 
-- src/zero.c: Main code.
+- src/main.c: Main code.
+
+- src/zero.{c,h}: ZERO functions for the libzero library.
 
 - README.txt: this file.
 
@@ -42,9 +44,14 @@ Files
 
 - src/iio.{c,h}: [iio](https://github.com/mnhrdt/iio) code and header.
 
-- create_votemap.py : Creates a colored vote map.
+- create_votemap.py: Creates a colored vote map.
 ```
 python create_votemap.py votes.png
+```
+
+- zero.py: Python binding to run the code. 
+```
+python zero.py <image_file>
 ```
 
 - *.png: Test images.
@@ -62,6 +69,10 @@ or if you want the code to be parallel
 ```
 from the directory where the source codes and the Makefile are located.
 
+To compile the library to use the python binding do
+```bash
+    make libzero
+```
 
 To verify a correct compilation you can apply the algorithm to the
 test images. This can be done by executing:
