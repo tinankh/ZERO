@@ -170,7 +170,7 @@ def main(filename):
                 print("with log(nfa) = " + str(forged_region[i].lnfa))
                 forgery_c2 = np.pad(forgery_c2[:-shift_x or None,:-shift_y or None],
                                     [(shift_x,0),(shift_y,0)])
-                forgery = forgery_c  + 0.5*forgery_c2
+                forgery = forgery_c  + 0.9*forgery_c2
                 forgery_result = np.clip(forgery, 0, 255)
 
     iio.write('result_zero.png', forgery_result) # all black if no forgeries

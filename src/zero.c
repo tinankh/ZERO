@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------
 
-  Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
-  Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
+  Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -602,4 +602,42 @@ int zero(double * input, double * image, int * votes, double * lnfa_grids,
                "to make your own opinion about a potential forgery.\n");
     }
     return main_grid;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* Main code.
+ */
+int zero_bis(double * input, double * image, int * votes,
+             meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+             int X, int Y, int C) {
+
+    /* int global_grids = 0; */
+    int forgery_found = 0;
+
+    /* luminance image */
+    rgb2luminance(input, image, X, Y, C);
+
+    /* compute vote map */
+    compute_grid_votes_per_pixel(image, votes, X, Y);
+
+    /* compute forged regions */
+    forgery_found = detect_no_grid(votes, forgery, forgery_e, forged_regions, X, Y);
+
+
+    if (forgery_found != 0) {
+        for (int i=0; i<forgery_found; i++) {
+                printf("\nAn absence of grid was found here: \n");
+            printf("%d %d - %d %d [%dx%d]", forged_regions[i].x0, forged_regions[i].y0,
+                   forged_regions[i].x1, forged_regions[i].y1,
+                   forged_regions[i].x1-forged_regions[i].x0+1,
+                   forged_regions[i].y1-forged_regions[i].y0+1);
+            printf("\nlog(nfa) = %g\n", forged_regions[i].lnfa);
+        }
+        printf("\nSuspicious traces found in the image.\n"
+               "This may be caused by image manipulations such as resampling, \n"
+               "copy-paste, splicing. Please examine the deviant meaningful region \n"
+               "to make your own opinion about a potential forgery.\n");
+    }
+    return 1;
 }

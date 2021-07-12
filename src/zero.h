@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------
 
-  Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
-  Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
+  Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -51,6 +51,10 @@ int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
                    meaningful_reg * forged_regions, int X, int Y);
 
 int zero(double * input, double * image, int * votes, double * lnfa_grids,
+         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+         int X, int Y, int C);
+
+int zero_bis(double * input, double * image, int * votes,
          meaningful_reg * forged_regions, int * forgery, int *forgery_e,
          int X, int Y, int C);
 

@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------
 
-  Copyright (c) 2018-2020 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2020 Jérémy Anger <anger@cmla.ens-cachan.fr>
-  Copyright (c) 2018-2020 Tina Nikoukhah <tinanikoukhah@gmail.com>
+  Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
+  Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -58,7 +58,11 @@ int main(int argc, char ** argv) {
     forgery_e = (int *) xcalloc(X * Y, sizeof(int));
 
     /* run algorithm */
-    main_grid = zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
+    if (argc == 3 && (strcmp (argv[2], "-ext") == 0)) {
+        zero_bis(input, image, votes, forged_regions, forgery, forgery_e, X, Y, C);
+    }
+    else
+        main_grid = zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
 
     /* store vote map and forgery detection outputs */
     iio_write_image_double("luminance.png", image, X, Y);
@@ -81,4 +85,4 @@ int main(int argc, char ** argv) {
 
     return EXIT_SUCCESS;
 }
-/*----------------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------------- */

@@ -34,6 +34,6 @@ test: zero
 
 clean:
 	rm -f zero
-	rm -f votes.png forgery.png forgery_c.png
+	rm -f votes.png forgery.png forgery_c.png main_grid.txt
 
 .PHONY: clean
