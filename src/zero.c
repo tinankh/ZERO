@@ -78,9 +78,9 @@ void rgb2luminance(double * input, double * output, int X, int Y, int C) {
     if (C >= 3) {
         for (int x=0; x<X; x++)
             for(int y=0; y<Y; y++)
-                output[x+y*X] = 0.299 * input[x + y*X + 0*X*Y]
-                    + 0.587 * input[x + y*X + 1*X*Y]
-                    + 0.114 * input[x + y*X + 2*X*Y];
+                output[x+y*X] = round(0.299 * input[x + y*X + 0*X*Y]
+                                    + 0.587 * input[x + y*X + 1*X*Y]
+                                    + 0.114 * input[x + y*X + 2*X*Y]);
     }
     else
         memcpy(output, input, X*Y*sizeof(double));
@@ -528,6 +528,34 @@ int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
 
 
 /*----------------------------------------------------------------------------*/
+/* region growing bounding box test
+ */
+void region_growing(int * votes, int X, int Y, int x0, int x1,
+                   int y0, int y1) {
+
+    double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
+    double p = 1.0 / 64.0;
+
+    int reg_size = 0;
+
+    /* region growing of zones that voted for (0,0) */
+    for (int x=x0; x<x1; x++)
+        for (int y=y0; y<y1; y++)
+            if (votes[x+y*X] == 0)
+                reg_size ++;
+
+    /* compute NFA for regions with at least the minimal size */
+    int n = (x1 - x0 + 1) * (y1 - y0 + 1) / 64;
+    int k = reg_size / 64;
+    double lnfa = log_nfa( n, k, p, logNT );
+
+    printf("test region log(nfa) = %g\n", lnfa);
+
+}
+
+
+
+/*----------------------------------------------------------------------------*/
 /* Main code.
  */
 int zero(double * input, double * image, int * votes, double * lnfa_grids,
@@ -623,7 +651,6 @@ int zero_bis(double * input, double * image, int * votes,
 
     /* compute forged regions */
     forgery_found = detect_no_grid(votes, forgery, forgery_e, forged_regions, X, Y);
-
 
     if (forgery_found != 0) {
         for (int i=0; i<forgery_found; i++) {

@@ -50,6 +50,10 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
 int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
                    meaningful_reg * forged_regions, int X, int Y);
 
+void region_growing(int * votes, int X, int Y, int x0, int x1,
+                    int y0, int y1);
+
+
 int zero(double * input, double * image, int * votes, double * lnfa_grids,
          meaningful_reg * forged_regions, int * forgery, int *forgery_e,
          int X, int Y, int C);
