@@ -48,6 +48,10 @@ Files
 ```
 python create_votemap.py votes.png
 ```
+- merge_zero.py: Creates a final visual result which merges the two forgery masks.
+```
+python merge_zero.py forgery_c1.png forgery_c2.png luminance.png
+```
 
 - zero.py: Python binding to run the code. 
 ```
@@ -92,7 +96,7 @@ No suspicious traces found in the image with the performed analysis.
 test on pelican.png
 -------------------
 ./zero pelican.png
-main grid: #6 [6 0] log(nfa) = -6341.93
+main grid: #6 [6 0] log(nfa) = -6373.72
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
@@ -114,13 +118,13 @@ to make your own opinion about a potential forgery.
 test on tampered2.png
 ---------------------
 ./zero tampered2.png
-main grid: #6 [6 0] log(nfa) = -6157.66
+main grid: #6 [6 0] log(nfa) = -6188.44
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
-A meaningful grid different from the main one was found here: 330 68 - 401 104 [72x37]
+A meaningful grid different from the main one was found here: 330 68 - 401 111 [72x44]
 grid: #34 [2 4]
-log(nfa) = -44.7316
+log(nfa) = -39.2402
 
 Suspicious traces found in the image.
 This may be caused by image manipulations such as resampling,

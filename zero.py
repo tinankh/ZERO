@@ -2,7 +2,7 @@ import iio
 import cffi
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage.util import view_as_blocks
+# from skimage.util import view_as_blocks
 import scipy as sp
 # import sys
 # import scipy.fft
@@ -22,10 +22,6 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e, meaningful
                    int X, int Y, int main_grid);
 int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
                    meaningful_reg * forged_regions, int X, int Y);
-
-int zero(double * input, double * image, int * votes, double * lnfa_grids,
-         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
-         int X, int Y, int C);
 ''')
 
 libzero = ffi.dlopen('./libzero.so')
@@ -52,7 +48,7 @@ def P(array):
     typestr = 'double*'
     if array.dtype == np.float32:
         typestr = 'float*'
-    elif array.dtype == np.bool:
+    elif array.dtype == bool:
         typestr = 'bool*'
     elif array.dtype == np.int32:
         typestr = 'int*'
@@ -70,7 +66,7 @@ def main(filename):
     im = im.copy(order='C')
 
     libzero.rgb2luminance(P(image), P(im), w, h, c)
-    # im = np.round(im)
+    iio.write('luminance.png', 
 
     # intermediate step before statistical validation
     print('2. compute vote map\n')
@@ -149,7 +145,6 @@ def main(filename):
         img = img.copy(order='C')
 
         libzero.rgb2luminance(P(pil_image), P(img), w, h, c)
-        # img = np.round(img)
 
         votes = np.zeros(img.shape, dtype=np.int32)
         libzero.compute_grid_votes_per_pixel(P(img), P(votes), w, h)
