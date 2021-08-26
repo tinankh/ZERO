@@ -1,4 +1,4 @@
-CFLAGS=-std=gnu99 -O3
+CFLAGS= -O3
 LIB=-lpng -ltiff -ljpeg -lm $(OpenMP)
 SRC_FILES=$(wildcard src/*.c)
 
