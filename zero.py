@@ -66,7 +66,7 @@ def main(filename):
     im = im.copy(order='C')
 
     libzero.rgb2luminance(P(image), P(im), w, h, c)
-    iio.write('luminance.png', 
+    iio.write('luminance.png', im)
 
     # intermediate step before statistical validation
     print('2. compute vote map\n')

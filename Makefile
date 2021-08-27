@@ -2,7 +2,6 @@ CFLAGS= -O3
 LIB=-lpng -ltiff -ljpeg -lm $(OpenMP)
 SRC_FILES=$(wildcard src/*.c)
 
-
 all: zero
 
 zero: $(SRC_FILES)
