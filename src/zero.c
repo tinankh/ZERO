@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h>
 
 #include "zero.h"
 
@@ -208,8 +209,9 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y) {
                            in such case, the optimal threshold to decide if a
                            coefficient is zero or not is the midpoint between
                            0 and 1, thus 0.5 */
-                        if (fabs(dct_ij) < 0.5)
+                        if (fabs(dct_ij) < 0.5) {
                             z++;
+                        }
                     }
 
             /* check all pixels in the block and update votes */
@@ -414,7 +416,7 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
 /*----------------------------------------------------------------------------*/
 /* detects zones which have no grid.
  */
-int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
+int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
                    meaningful_reg * forged_regions, int X, int Y) {
 
     double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
@@ -650,7 +652,7 @@ int zero_bis(double * input, double * image, int * votes,
     compute_grid_votes_per_pixel(image, votes, X, Y);
 
     /* compute forged regions */
-    forgery_found = detect_no_grid(votes, forgery, forgery_e, forged_regions, X, Y);
+    forgery_found = detect_missing_grid(votes, forgery, forgery_e, forged_regions, X, Y);
 
     if (forgery_found != 0) {
         for (int i=0; i<forgery_found; i++) {
