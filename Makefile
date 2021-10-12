@@ -17,22 +17,22 @@ test: zero
 	@echo
 	@echo test on roma.png
 	@echo ----------------
-	./zero roma.png
+	./zero roma.png roma99.jpg
 	@echo
 	@echo test on pelican.png
 	@echo -------------------
-	./zero pelican.png
+	./zero pelican.png pelican99.jpg
 	@echo
 	@echo test on tampered1.png
 	@echo ---------------------
-	./zero tampered1.png
+	./zero tampered1.png tampered1_99.jpg
 	@echo
 	@echo test on tampered2.png
 	@echo ---------------------
-	./zero tampered2.png
+	./zero tampered2.png tampered2_99.jpg
 
 clean:
 	rm -f zero
-	rm -f luminance.png votes.png forgery.png forgery_c.png main_grid.txt
+	rm -f luminance.png votes.png votes_compressed.png mask_f.png mask_m.png
 
 .PHONY: clean

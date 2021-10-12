@@ -48,19 +48,18 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
                    int X, int Y, int main_grid);
 
 int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
-                   meaningful_reg * forged_regions, int X, int Y);
+                        meaningful_reg * forged_regions, double * lnfa_grids,
+                        int X, int Y);
 
 void region_growing(int * votes, int X, int Y, int x0, int x1,
                     int y0, int y1);
 
-
-int zero(double * input, double * image, int * votes, double * lnfa_grids,
-         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+int zero(double * input, double * input_compressed,
+         double * image, double * image_compressed,
+         int * votes, int * votes_compressed,
+         double * lnfa_grids,
+         meaningful_reg * foreign_regions, meaningful_reg * missing_regions,
+         int * f, int * mask_f, int * m, int * mask_m,
          int X, int Y, int C);
-
-int zero_bis(double * input, double * image, int * votes,
-         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
-         int X, int Y, int C);
-
 
 #endif

@@ -279,7 +279,6 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
                 }
             }
 
-
     /* compute the NFA value for all the significant grids.  votes are
        correlated by irregular 8x8 blocks dividing by 64 gives a rough
        count of the number of independent votes */
@@ -417,7 +416,8 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
 /* detects zones which have no grid.
  */
 int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
-                   meaningful_reg * forged_regions, int X, int Y) {
+                        meaningful_reg * missing_regions, double * lnfa_grids,
+                        int X, int Y) {
 
     double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     double p = 1.0 / 64.0;
@@ -426,6 +426,7 @@ int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
     int * used;
     int * reg_x;
     int * reg_y;
+    /* do we change this?? */
     int W = 12; /* distance to look for neighbors in the region growing process.
                    A meaningful forgery must have a density of votes of at least
                    1/64. thus, its votes should not be in mean further away one
@@ -484,12 +485,12 @@ int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
                     double lnfa = log_nfa( n, k, p, logNT );
 
                     if (lnfa < 0.0) { /* meaningful grid different from the main found */
-                        forged_regions[forgery_found].x0 = x0;
-                        forged_regions[forgery_found].x1 = x1;
-                        forged_regions[forgery_found].y0 = y0;
-                        forged_regions[forgery_found].y1 = y1;
-                        forged_regions[forgery_found].grid = 0;
-                        forged_regions[forgery_found].lnfa = lnfa;
+                        missing_regions[forgery_found].x0 = x0;
+                        missing_regions[forgery_found].x1 = x1;
+                        missing_regions[forgery_found].y0 = y0;
+                        missing_regions[forgery_found].y1 = y1;
+                        missing_regions[forgery_found].grid = 0;
+                        missing_regions[forgery_found].lnfa = lnfa;
 
                         forgery_found ++;
 
@@ -560,19 +561,25 @@ void region_growing(int * votes, int X, int Y, int x0, int x1,
 /*----------------------------------------------------------------------------*/
 /* Main code.
  */
-int zero(double * input, double * image, int * votes, double * lnfa_grids,
-         meaningful_reg * forged_regions, int * forgery, int *forgery_e,
+int zero(double * input, double * input_compressed,
+         double * image, double * image_compressed,
+         int * votes, int * votes_compressed,
+         double * lnfa_grids,
+         meaningful_reg * foreign_regions, meaningful_reg * missing_regions,
+         int * f, int * mask_f, int * m, int * mask_m,
          int X, int Y, int C) {
 
     int main_grid = -1;
     int global_grids = 0;
-    int forgery_found = 0;
+    int forgery_found1 = 0; int forgery_found2 = 0;
 
     /* luminance image */
     rgb2luminance(input, image, X, Y, C);
+    rgb2luminance(input_compressed, image_compressed, X, Y, C);
 
     /* compute vote map */
     compute_grid_votes_per_pixel(image, votes, X, Y);
+    compute_grid_votes_per_pixel(image_compressed, votes_compressed, X, Y);
 
     /* detect global grids and main_grid */
     main_grid = detect_global_grids(votes, lnfa_grids, X, Y);
@@ -599,74 +606,68 @@ int zero(double * input, double * image, int * votes, double * lnfa_grids,
             global_grids++;
         }
     }
-
     if (global_grids > 1)
         printf("There is more than one meaningful grid.\n"
                "This is suspicious.\n");
 
     /* compute forged regions */
-    forgery_found = detect_foreign_grids(votes, forgery, forgery_e, forged_regions,
-                                   X, Y, main_grid);
+    forgery_found1 = detect_foreign_grids(votes, f, mask_f, foreign_regions, X, Y, main_grid);
 
-    if (forgery_found == 0 && main_grid < 1)
-        printf("\nNo suspicious traces found in the image "
-               "with the performed analysis.\n");
-
-    if (forgery_found != 0) {
-        for (int i=0; i<forgery_found; i++) {
+    if (forgery_found1 != 0) {
+        for (int i=0; i<forgery_found1; i++) {
             if (main_grid != -1)
                 printf("\nA meaningful grid different from the main one was found here: ");
             else
                 printf("\nA grid was found here: \n");
-            printf("%d %d - %d %d [%dx%d]", forged_regions[i].x0, forged_regions[i].y0,
-                   forged_regions[i].x1, forged_regions[i].y1,
-                   forged_regions[i].x1-forged_regions[i].x0+1,
-                   forged_regions[i].y1-forged_regions[i].y0+1);
-            printf("\ngrid: #%d [%d %d] ", forged_regions[i].grid,
-                   forged_regions[i].grid % 8, forged_regions[i].grid / 8 );
-            printf("\nlog(nfa) = %g\n", forged_regions[i].lnfa);
+            printf("%d %d - %d %d [%dx%d]", foreign_regions[i].x0, foreign_regions[i].y0,
+                   foreign_regions[i].x1, foreign_regions[i].y1,
+                   foreign_regions[i].x1-foreign_regions[i].x0+1,
+                   foreign_regions[i].y1-foreign_regions[i].y0+1);
+            printf("\ngrid: #%d [%d %d] ", foreign_regions[i].grid,
+                   foreign_regions[i].grid % 8, foreign_regions[i].grid / 8 );
+            printf("\nlog(nfa) = %g\n", foreign_regions[i].lnfa);
         }
+    }
+
+
+    if (main_grid > -1) {
+        /* update votemap by avoiding the votes for a global grid or a local grid */
+        for (int x=0; x<X; x++) {
+            for (int y=0; y<Y; y++) {
+                if (lnfa_grids[votes[x+y*X]] < 0.0)
+                    votes_compressed[x+y*X] = -1;
+                if (f[x+y*X] > 0)
+                    votes_compressed[x+y*X] = -1;
+            }
+        }
+
+        forgery_found2 = detect_missing_grid(votes_compressed, m, mask_m, missing_regions,
+                                            lnfa_grids, X, Y);
+
+        if (forgery_found2 != 0) {
+            for (int i=0; i<forgery_found2; i++) {
+                printf("\nAn absence of grid was found here: \n");
+                printf("%d %d - %d %d [%dx%d]", missing_regions[i].x0, missing_regions[i].y0,
+                       missing_regions[i].x1, missing_regions[i].y1,
+                       missing_regions[i].x1-missing_regions[i].x0+1,
+                       missing_regions[i].y1-missing_regions[i].y0+1);
+                printf("\nlog(nfa) = %g\n", missing_regions[i].lnfa);
+            }
+        }
+
+    }
+
+    if (forgery_found1 + forgery_found2 == 0 && main_grid < 1)
+        printf("\nNo suspicious traces found in the image "
+               "with the performed analysis.\n");
+
+    if (forgery_found1 + forgery_found2 != 0) {
         printf("\nSuspicious traces found in the image.\n"
                "This may be caused by image manipulations such as resampling, \n"
                "copy-paste, splicing. Please examine the deviant meaningful region \n"
                "to make your own opinion about a potential forgery.\n");
     }
+
     return main_grid;
 }
 
-
-/*----------------------------------------------------------------------------*/
-/* Main code.
- */
-int zero_bis(double * input, double * image, int * votes,
-             meaningful_reg * forged_regions, int * forgery, int *forgery_e,
-             int X, int Y, int C) {
-
-    /* int global_grids = 0; */
-    int forgery_found = 0;
-
-    /* luminance image */
-    rgb2luminance(input, image, X, Y, C);
-
-    /* compute vote map */
-    compute_grid_votes_per_pixel(image, votes, X, Y);
-
-    /* compute forged regions */
-    forgery_found = detect_missing_grid(votes, forgery, forgery_e, forged_regions, X, Y);
-
-    if (forgery_found != 0) {
-        for (int i=0; i<forgery_found; i++) {
-                printf("\nAn absence of grid was found here: \n");
-            printf("%d %d - %d %d [%dx%d]", forged_regions[i].x0, forged_regions[i].y0,
-                   forged_regions[i].x1, forged_regions[i].y1,
-                   forged_regions[i].x1-forged_regions[i].x0+1,
-                   forged_regions[i].y1-forged_regions[i].y0+1);
-            printf("\nlog(nfa) = %g\n", forged_regions[i].lnfa);
-        }
-        printf("\nSuspicious traces found in the image.\n"
-               "This may be caused by image manipulations such as resampling, \n"
-               "copy-paste, splicing. Please examine the deviant meaningful region \n"
-               "to make your own opinion about a potential forgery.\n");
-    }
-    return 1;
-}

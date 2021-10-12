@@ -50,7 +50,7 @@ python create_votemap.py votes.png
 ```
 - merge_zero.py: Creates a final visual result which merges the two forgery masks.
 ```
-python merge_zero.py forgery_c1.png forgery_c2.png luminance.png
+python merge_zero.py mask_f.png mask_m.png luminance.png
 ```
 
 - zero.py: Python binding to run the code. 
@@ -58,7 +58,7 @@ python merge_zero.py forgery_c1.png forgery_c2.png luminance.png
 python zero.py <image_file>
 ```
 
-- *.png: Test images.
+- *.{png,jpg}: Test images.
 
 
 Compiling
@@ -88,21 +88,21 @@ This should print the following message:
 ```
 test on roma.png
 ----------------
-./zero roma.png
+./zero roma.png roma99.jpg
 No overall JPEG grid found.
 
 No suspicious traces found in the image with the performed analysis.
 
 test on pelican.png
 -------------------
-./zero pelican.png
+./zero pelican.png pelican99.jpg
 main grid: #6 [6 0] log(nfa) = -6373.72
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
 test on tampered1.png
 ---------------------
-./zero tampered1.png
+./zero tampered1.png tampered1_99.jpg
 No overall JPEG grid found.
 
 A grid was found here:
@@ -117,7 +117,7 @@ to make your own opinion about a potential forgery.
 
 test on tampered2.png
 ---------------------
-./zero tampered2.png
+./zero tampered2.png tampered2_99.jpg
 main grid: #6 [6 0] log(nfa) = -6188.44
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.

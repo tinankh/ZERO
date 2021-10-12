@@ -31,5 +31,4 @@ output = 255 * colormap(im)[...,:3]
 output[im == 255] = 0
 
 output = output.astype(np.uint8)
-imageio.imwrite('colored_votes' + '.png', output)
-
+imageio.imwrite('colored_'+ str(sys.argv[1]), output)

@@ -28,59 +28,69 @@
 #include "zero.h"
 
 int main(int argc, char ** argv) {
-    double * input;
-    double * image;
+    double * input; double * input_compressed;
+    double * image; double * image_compressed;
     int X, Y, C;
-    int * votes;
+    int * votes; int * votes_compressed;
     double lnfa_grids[64] = {0.0};
-    meaningful_reg * forged_regions;
-    int * forgery;
-    int * forgery_e;
+    meaningful_reg * foreign_regions;
+    meaningful_reg * missing_regions;
+    int * f; int * mask_f;
+    int * m; int * mask_m;
     int main_grid = -1;
-    FILE * maingrid_file;
-    maingrid_file = fopen("main_grid.txt", "w");
 
-    if (argc < 2) error("use: zero <image>\nfinds JPEG grids and forgeries");
+    if (argc < 3) error("use: zero <image> <imagecompressed>\nfinds JPEG grids and forgeries");
 
     input = iio_read_image_double_split(argv[1], &X, &Y, &C);
+    input_compressed = iio_read_image_double_split(argv[2], &X, &Y, &C);
 
     /* luminance image */
     image = (double *) xcalloc(X*Y, sizeof(double));
+    image_compressed = (double *) xcalloc(X*Y, sizeof(double));
 
     /* vote map */
     votes = (int *) xcalloc(X * Y, sizeof(int));
+    votes_compressed = (int *) xcalloc(X * Y, sizeof(int));
 
     /* compute forged regions */
-    forged_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
+    foreign_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
+    missing_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
 
     /* compute forgery masks */
-    forgery = (int *) xcalloc(X * Y, sizeof(int));
-    forgery_e = (int *) xcalloc(X * Y, sizeof(int));
+    f = (int *) xcalloc(X * Y, sizeof(int));
+    mask_f = (int *) xcalloc(X * Y, sizeof(int));
+
+    m = (int *) xcalloc(X * Y, sizeof(int));
+    mask_m = (int *) xcalloc(X * Y, sizeof(int));
 
     /* run algorithm */
-    if (argc == 3 && (strcmp (argv[2], "-ext") == 0)) {
-        zero_bis(input, image, votes, forged_regions, forgery, forgery_e, X, Y, C);
-    }
-    else
-        main_grid = zero(input, image, votes, lnfa_grids, forged_regions, forgery, forgery_e, X, Y, C);
+    main_grid = zero(input, input_compressed, image, image_compressed, votes, votes_compressed,
+                     lnfa_grids, foreign_regions, missing_regions, f, mask_f, m, mask_m,  X, Y, C);
 
     /* store vote map and forgery detection outputs */
     iio_write_image_double("luminance.png", image, X, Y);
-    fprintf(maingrid_file, "%d", main_grid);
     iio_write_image_int("votes.png", votes, X, Y);
-    iio_write_image_int("forgery.png", forgery, X, Y);
-    iio_write_image_int("forgery_c.png", forgery_e, X, Y);
-
-
-    fclose(maingrid_file);
+    iio_write_image_int("votes_compressed.png", votes_compressed, X, Y);
+    iio_write_image_int("mask_f.png", mask_f, X, Y);
+    iio_write_image_int("mask_m.png", mask_m, X, Y);
 
     /* free memory */
     free((void *) input);
+    free((void *) input_compressed);
+
     free((void *) image);
+    free((void *) image_compressed);
+
     free((void *) votes);
-    free((void *) forged_regions);
-    free((void *) forgery);
-    free((void *) forgery_e);
+    free((void *) votes_compressed);
+
+    free((void *) foreign_regions);
+    free((void *) missing_regions);
+
+    free((void *) f);
+    free((void *) mask_f);
+    free((void *) m);
+    free((void *) mask_m);
 
     return EXIT_SUCCESS;
 }

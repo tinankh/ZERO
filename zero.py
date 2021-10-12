@@ -20,7 +20,7 @@ typedef struct {
 } meaningful_reg;
 int detect_foreign_grids(int * votes, int * forgery, int * forgery_e, meaningful_reg * forged_regions,
                    int X, int Y, int main_grid);
-int detect_no_grid(int * votes, int * forgery, int * forgery_ext,
+int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
                    meaningful_reg * forged_regions, int X, int Y);
 ''')
 
@@ -119,21 +119,17 @@ def main(filename):
                   + " with log(nfa) = " + str(forged_region[i].lnfa))
 
     forgery_result = forgery_c
-    # do the rest only if main grid is detected
-    shift_x = (main_grid%8 + 4)%8
-    shift_y = (int(main_grid/8) + 4)%8
 
-    if main_grid > -1 and lnfa_grids[shift_x,shift_y] >= 0.0:
+    # do the rest only if main grid is detected
+    if main_grid > -1:
         print('\n5. create simulated version\n')
 
-        # create JPEG file with PIL from cropped input
+        # create JPEG file with PIL
         ######################################################
         from PIL import Image
         pil_image = Image.open(filename)
-        Y, X = pil_image.size
-        crop = pil_image.crop((shift_y, shift_x, Y+shift_y, X+shift_x))
-        crop.save('crop99.jpg', format='JPEG', quality=99)
-        pil_image = iio.read('crop99.jpg').astype(np.float64)
+        pil_image.save('version99.jpg', format='JPEG', quality=99)
+        pil_image = iio.read('version99.jpg').astype(np.float64)
 
         ######################################################
 
@@ -146,15 +142,33 @@ def main(filename):
 
         libzero.rgb2luminance(P(pil_image), P(img), w, h, c)
 
-        votes = np.zeros(img.shape, dtype=np.int32)
-        libzero.compute_grid_votes_per_pixel(P(img), P(votes), w, h)
+        votes2 = np.zeros(img.shape, dtype=np.int32)
+        libzero.compute_grid_votes_per_pixel(P(img), P(votes2), w, h)
+
+        iio.write('votes2.png', votes2)
+
+        nb_globalgrids = len(np.where(lnfa_grids<0)[0])
+        for i in range(nb_globalgrids):
+            x = np.where(lnfa_grids<0)[0][i]
+            y = np.where(lnfa_grids<0)[1][i]
+            coordgrid = x*8+y
+            votes2[votes == coordgrid] = -1
+
+        print('2bis. color vote map\n')
+        colored_votes = 255 * colormap(votes2)[...,:3]
+        colored_votes[votes2 == -1] = 0
+        colored_votes = colored_votes.astype(np.uint8)
+
+        # one color per grid origin + black in case of a tie
+        iio.write('colored_votemap_new.png', colored_votes)
+
 
         print('\n5. detect suspicious areas\n')
         forgery = np.zeros(img.shape, dtype=np.int32)
         forgery_c2 = np.zeros(img.shape, dtype=np.int32)
         forged_region = ffi.new('meaningful_reg[]', w*h)
 
-        forgery_found2 = libzero.detect_no_grid(P(votes), P(forgery), P(forgery_c2),
+        forgery_found2 = libzero.detect_missing_grid(P(votes2), P(forgery), P(forgery_c2),
                                             forged_region, w, h)
 
         if forgery_found2 > 0:
@@ -163,9 +177,7 @@ def main(filename):
                       + str(forged_region[i].y0) + " - " + str(forged_region[i].x1) + " "
                       + str(forged_region[i].y1))
                 print("with log(nfa) = " + str(forged_region[i].lnfa))
-                forgery_c2 = np.pad(forgery_c2[:-shift_x or None,:-shift_y or None],
-                                    [(shift_x,0),(shift_y,0)])
-                forgery = forgery_c  + 0.9*forgery_c2
+                forgery = forgery_c  + 0.5*forgery_c2
                 forgery_result = np.clip(forgery, 0, 255)
 
     iio.write('result_zero.png', forgery_result) # all black if no forgeries
