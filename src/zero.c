@@ -298,11 +298,11 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
 
 
 /*----------------------------------------------------------------------------*/
-/* detects zones which have grids different from the main grid.
+/* detects zones which are inconsistence with the main grid.
  */
-int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
-                   meaningful_reg * forged_regions,
-                   int X, int Y, int main_grid) {
+int detect_forgeries(int * votes, int * forgery, int * forgery_e,
+                     meaningful_reg * forged_regions, double * lnfa_grids,
+                     int X, int Y, int grid_to_exclude, int vote_max) {
     double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     double p = 1.0 / 64.0;
     int forgery_found = 0; // initialized at false
@@ -331,8 +331,8 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
     /* region growing of zones that voted for other than the main grid */
     for (int x=0; x<X; x++)
         for (int y=0; y<Y; y++)
-            if (used[x+y*X] == FALSE && votes[x+y*X] != main_grid
-                && votes[x+y*X] >= 0) {
+            if (used[x+y*X] == FALSE && votes[x+y*X] != grid_to_exclude
+                && votes[x+y*X] >= 0 && votes[x+y*X] <= vote_max) {
                 /* initialize region with the seed pixel */
                 int reg_size = 0;
                 int grid = votes[x+y*X];
@@ -411,153 +411,6 @@ int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
     return forgery_found;
 }
 
-
-/*----------------------------------------------------------------------------*/
-/* detects zones which have no grid.
- */
-int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
-                        meaningful_reg * missing_regions, double * lnfa_grids,
-                        int X, int Y) {
-
-    double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
-    double p = 1.0 / 64.0;
-    int forgery_found = 0; // initialized at false
-    int * forgery_d;
-    int * used;
-    int * reg_x;
-    int * reg_y;
-    /* do we change this?? */
-    int W = 12; /* distance to look for neighbors in the region growing process.
-                   A meaningful forgery must have a density of votes of at least
-                   1/64. thus, its votes should not be in mean further away one
-                   from another than a distance of 8.
-                   one could use a little more to allow for some variation in the
-                   distribution. */
-
-    /* miminal block size that can lead to a meaningful detection */
-    int min_size = ceil( 64.0 * logNT / log10( 64.0 ) );
-
-    /* initialize global data */
-    forgery_d = (int *) xcalloc(X * Y, sizeof(int));
-    used = (int *) xcalloc(X * Y, sizeof(int));
-    reg_x = (int *) xcalloc(X * Y, sizeof(int));
-    reg_y = (int *) xcalloc(X * Y, sizeof(int));
-
-    for (int i=0; i<X*Y; i++) used[i] = FALSE;
-
-    /* region growing of zones that voted for (0,0) */
-    for (int x=0; x<X; x++)
-        for (int y=0; y<Y; y++)
-            if (used[x+y*X] == FALSE && votes[x+y*X] == 0) {
-                /* initialize region with the seed pixel */
-                int reg_size = 0;
-                /* int grid = votes[x+y*X]; */
-                int x0 = x; /* region bounding box */
-                int y0 = y;
-                int x1 = x;
-                int y1 = y;
-                used[x+y*X] = TRUE;
-                reg_x[reg_size] = x;
-                reg_y[reg_size] = y;
-                ++reg_size;
-
-                /* iteratively add neighbor pixel of pixels in the region */
-                for (int i=0; i<reg_size; i++)
-                    for (int xx=reg_x[i]-W; xx<=reg_x[i]+W; xx++)
-                        for (int yy=reg_y[i]-W; yy<=reg_y[i]+W; yy++)
-                            if (xx >=0 && xx < X && yy >= 0 && yy < Y)
-                                if (used[xx+yy*X] == FALSE
-                                    && votes[xx+yy*X] == 0) {
-                                    used[xx+yy*X] = TRUE;
-                                    reg_x[reg_size] = xx;
-                                    reg_y[reg_size] = yy;
-                                    reg_size++;
-                                    if (xx < x0) x0 = xx; /* update region bounding box */
-                                    if (yy < y0) y0 = yy;
-                                    if (xx > x1) x1 = xx;
-                                    if (yy > y1) y1 = yy;
-                                }
-
-                /* compute NFA for regions with at least the minimal size */
-                if (reg_size >= min_size) {
-                    int n = (x1 - x0 + 1) * (y1 - y0 + 1) / 64;
-                    int k = reg_size / 64;
-                    double lnfa = log_nfa( n, k, p, logNT );
-
-                    if (lnfa < 0.0) { /* meaningful grid different from the main found */
-                        missing_regions[forgery_found].x0 = x0;
-                        missing_regions[forgery_found].x1 = x1;
-                        missing_regions[forgery_found].y0 = y0;
-                        missing_regions[forgery_found].y1 = y1;
-                        missing_regions[forgery_found].grid = 0;
-                        missing_regions[forgery_found].lnfa = lnfa;
-
-                        forgery_found ++;
-
-                        /* mark points of the region in the forgery mask */
-                        for (int i=0; i<reg_size; i++)
-                            forgery[reg_x[i] + reg_y[i]*X] = 255;
-                    }
-                }
-            }
-
-    /* morphologic closing of forgery mask */
-    for (int x=W; x<X-W; x++)
-        for (int y=W; y<Y-W; y++)
-            if (forgery[x+y*X] != 0)
-                for (int xx=x-W; xx<=x+W; xx++)
-                    for (int yy=y-W; yy<=y+W; yy++)
-                        forgery_d[xx+yy*X] = forgery_ext[xx+yy*X] = 255;
-    for (int x=W; x<X-W; x++)
-        for (int y=W; y<Y-W; y++)
-            if (forgery_d[x+y*X] == 0)
-                for (int xx=x-W; xx<=x+W; xx++)
-                    for (int yy=y-W; yy<=y+W; yy++)
-                        forgery_ext[xx+yy*X] = 0;
-
-
-
-    /* free memory */
-    free((void *) forgery_d);
-    free((void *) used);
-    free((void *) reg_x);
-    free((void *) reg_y);
-
-    return forgery_found;
-
-}
-
-
-
-
-/*----------------------------------------------------------------------------*/
-/* region growing bounding box test
- */
-void region_growing(int * votes, int X, int Y, int x0, int x1,
-                   int y0, int y1) {
-
-    double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
-    double p = 1.0 / 64.0;
-
-    int reg_size = 0;
-
-    /* region growing of zones that voted for (0,0) */
-    for (int x=x0; x<x1; x++)
-        for (int y=y0; y<y1; y++)
-            if (votes[x+y*X] == 0)
-                reg_size ++;
-
-    /* compute NFA for regions with at least the minimal size */
-    int n = (x1 - x0 + 1) * (y1 - y0 + 1) / 64;
-    int k = reg_size / 64;
-    double lnfa = log_nfa( n, k, p, logNT );
-
-    printf("test region log(nfa) = %g\n", lnfa);
-
-}
-
-
-
 /*----------------------------------------------------------------------------*/
 /* Main code.
  */
@@ -611,7 +464,8 @@ int zero(double * input, double * input_compressed,
                "This is suspicious.\n");
 
     /* compute forged regions */
-    forgery_found1 = detect_foreign_grids(votes, f, mask_f, foreign_regions, X, Y, main_grid);
+    forgery_found1 = detect_forgeries(votes, f, mask_f, foreign_regions,
+                                      lnfa_grids, X, Y, main_grid, 63);
 
     if (forgery_found1 != 0) {
         for (int i=0; i<forgery_found1; i++) {
@@ -641,8 +495,8 @@ int zero(double * input, double * input_compressed,
             }
         }
 
-        forgery_found2 = detect_missing_grid(votes_compressed, m, mask_m, missing_regions,
-                                            lnfa_grids, X, Y);
+        forgery_found2 = detect_forgeries(votes_compressed, m, mask_m, missing_regions,
+                                          lnfa_grids, X, Y, -1, 0);
 
         if (forgery_found2 != 0) {
             for (int i=0; i<forgery_found2; i++) {
@@ -654,7 +508,6 @@ int zero(double * input, double * input_compressed,
                 printf("\nlog(nfa) = %g\n", missing_regions[i].lnfa);
             }
         }
-
     }
 
     if (forgery_found1 + forgery_found2 == 0 && main_grid < 1)

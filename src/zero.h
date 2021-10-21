@@ -43,16 +43,9 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y);
 
 int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y);
 
-int detect_foreign_grids(int * votes, int * forgery, int * forgery_e,
-                   meaningful_reg * forged_regions,
-                   int X, int Y, int main_grid);
-
-int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
-                        meaningful_reg * forged_regions, double * lnfa_grids,
-                        int X, int Y);
-
-void region_growing(int * votes, int X, int Y, int x0, int x1,
-                    int y0, int y1);
+int detect_forgeries(int * votes, int * forgery, int * forgery_e,
+                     meaningful_reg * forged_regions, double * lnfa_grids,
+                     int X, int Y, int grid_to_exclude, int vote_max);
 
 int zero(double * input, double * input_compressed,
          double * image, double * image_compressed,
