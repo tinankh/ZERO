@@ -87,8 +87,6 @@ void rgb2luminance(double * input, double * output, int X, int Y, int C) {
         memcpy(output, input, X*Y*sizeof(double));
 }
 
-
-
 /*----------------------------------------------------------------------------*/
 /* computes the logarithm of NFA to base 10.
 
@@ -259,7 +257,6 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
     int max_votes = 0;
     int most_voted_grid = -1;
     double p = 1.0 / 64.0;
-    /* double lnfa; */
 
     /* initialize counts */
     for (int i=0; i<64; i++) grid_votes[i] = 0;
@@ -285,7 +282,6 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
     for (int i=0; i<64; i++) {
         int n = X * Y / 64;
         int k = grid_votes[i] / 64;
-
         lnfa_grids[i] = log_nfa(n, k, p, logNT);
     }
 
@@ -302,7 +298,7 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
  */
 int detect_forgeries(int * votes, int * forgery, int * forgery_e,
                      meaningful_reg * forged_regions, double * lnfa_grids,
-                     int X, int Y, int grid_to_exclude, int vote_max) {
+                     int X, int Y, int grid_to_exclude, int grid_max) {
     double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     double p = 1.0 / 64.0;
     int forgery_found = 0; // initialized at false
@@ -332,7 +328,7 @@ int detect_forgeries(int * votes, int * forgery, int * forgery_e,
     for (int x=0; x<X; x++)
         for (int y=0; y<Y; y++)
             if (used[x+y*X] == FALSE && votes[x+y*X] != grid_to_exclude
-                && votes[x+y*X] >= 0 && votes[x+y*X] <= vote_max) {
+                && votes[x+y*X] >= 0 && votes[x+y*X] <= grid_max) {
                 /* initialize region with the seed pixel */
                 int reg_size = 0;
                 int grid = votes[x+y*X];
@@ -398,8 +394,6 @@ int detect_forgeries(int * votes, int * forgery, int * forgery_e,
                 for (int xx=x-W; xx<=x+W; xx++)
                     for (int yy=y-W; yy<=y+W; yy++)
                         forgery_e[xx+yy*X] = 0;
-
-
 
     /* free memory */
     /* free((void *) logNFA_map); */
@@ -485,15 +479,11 @@ int zero(double * input, double * input_compressed,
 
 
     if (main_grid > -1) {
-        /* update votemap by avoiding the votes for a global grid or a local grid */
-        for (int x=0; x<X; x++) {
-            for (int y=0; y<Y; y++) {
-                if (lnfa_grids[votes[x+y*X]] < 0.0)
+        /* update votemap by avoiding the votes for the main grid */
+        for (int x=0; x<X; x++)
+            for (int y=0; y<Y; y++)
+                if (votes[x+y*X] == main_grid)
                     votes_compressed[x+y*X] = -1;
-                if (f[x+y*X] > 0)
-                    votes_compressed[x+y*X] = -1;
-            }
-        }
 
         forgery_found2 = detect_forgeries(votes_compressed, m, mask_m, missing_regions,
                                           lnfa_grids, X, Y, -1, 0);
@@ -523,4 +513,3 @@ int zero(double * input, double * input_compressed,
 
     return main_grid;
 }
-
