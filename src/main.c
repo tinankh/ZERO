@@ -27,71 +27,147 @@
 #include "iio.h"
 #include "zero.h"
 
+/*----------------------------------------------------------------------------*/
 int main(int argc, char ** argv) {
-    double * input; double * input_compressed;
-    double * image; double * image_compressed;
-    int X, Y, C;
-    int * votes; int * votes_compressed;
+    double * input = NULL;
+    double * input_jpeg = NULL;
+    double * luminance; double * luminance_jpeg;
+    int * votes; int * votes_jpeg;
+    int X, Y, C, XX, YY, CC;
     double lnfa_grids[64] = {0.0};
     meaningful_reg * foreign_regions;
+    int foreign_regions_n = 0;
     meaningful_reg * missing_regions;
-    int * f; int * mask_f;
-    int * m; int * mask_m;
+    int missing_regions_n = 0;
+    int * mask_f; int * mask_f_reg;
+    int * mask_m; int * mask_m_reg;
     int main_grid = -1;
+    int global_grids = 0;
 
-    if (argc < 3) error("use: zero <image> <imagecompressed>\nfinds JPEG grids and forgeries");
+    /* check input and usage */
+    if (argc != 2 && argc != 3)
+        error("usage: zero <image> [image_jpeg99]\n"
+              "finds JPEG grids and forgeries");
 
+    /* read input */
     input = iio_read_image_double_split(argv[1], &X, &Y, &C);
-    input_compressed = iio_read_image_double_split(argv[2], &X, &Y, &C);
+    if (argc == 3) {
+        input_jpeg = iio_read_image_double_split(argv[2], &XX, &YY, &CC);
+        if (X != XX || Y != YY || C != CC)
+            error("image and image_jpeg99 have different size or channels");
+    }
 
-    /* luminance image */
-    image = (double *) xcalloc(X*Y, sizeof(double));
-    image_compressed = (double *) xcalloc(X*Y, sizeof(double));
-
-    /* vote map */
-    votes = (int *) xcalloc(X * Y, sizeof(int));
-    votes_compressed = (int *) xcalloc(X * Y, sizeof(int));
-
-    /* compute forged regions */
+    /* allocate memory */
+    luminance       = (double *) xcalloc(X*Y, sizeof(double));
+    luminance_jpeg  = (double *) xcalloc(X*Y, sizeof(double));
+    votes           = (int *) xcalloc(X * Y, sizeof(int));
+    votes_jpeg      = (int *) xcalloc(X * Y, sizeof(int));
     foreign_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
     missing_regions = (meaningful_reg *) xcalloc(X*Y, sizeof(meaningful_reg));
-
-    /* compute forgery masks */
-    f = (int *) xcalloc(X * Y, sizeof(int));
-    mask_f = (int *) xcalloc(X * Y, sizeof(int));
-
-    m = (int *) xcalloc(X * Y, sizeof(int));
-    mask_m = (int *) xcalloc(X * Y, sizeof(int));
+    mask_f          = (int *) xcalloc(X * Y, sizeof(int));
+    mask_f_reg      = (int *) xcalloc(X * Y, sizeof(int));
+    mask_m          = (int *) xcalloc(X * Y, sizeof(int));
+    mask_m_reg      = (int *) xcalloc(X * Y, sizeof(int));
 
     /* run algorithm */
-    main_grid = zero(input, input_compressed, image, image_compressed, votes, votes_compressed,
-                     lnfa_grids, foreign_regions, missing_regions, f, mask_f, m, mask_m,  X, Y, C);
+    main_grid = zero(input, input_jpeg, luminance, luminance_jpeg,
+                     votes, votes_jpeg, lnfa_grids,
+                     foreign_regions, &foreign_regions_n,
+                     missing_regions, &missing_regions_n,
+                     mask_f, mask_f_reg, mask_m, mask_m_reg,  X, Y, C);
+
+    /* print detection result */
+
+    if (main_grid > -1) {
+        /* print main grid */
+        printf("main grid: #%d [%d %d] log(nfa) = %g\n", main_grid,
+               main_grid % 8, main_grid / 8, lnfa_grids[main_grid]);
+        global_grids++;
+    }
+
+    if (main_grid == -1)
+        /* main grid not found */
+        printf("No overall JPEG grid found.\n");
+
+    if (main_grid > 0)
+        printf("The most meaningful JPEG grid origin is not (0,0).\n"
+               "This may indicate that the image has been cropped.\n");
+
+    for (int i=0; i<64; i++) {
+        /* print list of meaningful grids */
+        if (lnfa_grids[i] < 0.0 && i != main_grid) {
+            printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
+                   i % 8, i / 8, lnfa_grids[i]);
+            global_grids++;
+        }
+    }
+
+    if (global_grids > 1)
+        printf("There is more than one meaningful grid.\n"
+               "This is suspicious.\n");
+
+    if (foreign_regions_n != 0) {
+        for (int i=0; i<foreign_regions_n; i++) {
+            if (main_grid != -1)
+                printf("\nA meaningful grid different from the main one "
+                       "was found here: ");
+            else
+                printf("\nA grid was found here: \n");
+            printf("%d %d - %d %d [%dx%d]",
+                   foreign_regions[i].x0, foreign_regions[i].y0,
+                   foreign_regions[i].x1, foreign_regions[i].y1,
+                   foreign_regions[i].x1 - foreign_regions[i].x0+1,
+                   foreign_regions[i].y1 - foreign_regions[i].y0+1);
+            printf("\ngrid: #%d [%d %d] ", foreign_regions[i].grid,
+                   foreign_regions[i].grid % 8, foreign_regions[i].grid / 8 );
+            printf("\nlog(nfa) = %g\n", foreign_regions[i].lnfa);
+        }
+    }
+
+    if (main_grid > -1 && missing_regions_n > 0) {
+        for (int i=0; i<missing_regions_n; i++) {
+            printf("\nAn absence of grid was found here: \n");
+            printf("%d %d - %d %d [%dx%d]",
+                   missing_regions[i].x0, missing_regions[i].y0,
+                   missing_regions[i].x1, missing_regions[i].y1,
+                   missing_regions[i].x1 - missing_regions[i].x0+1,
+                   missing_regions[i].y1 - missing_regions[i].y0+1);
+            printf("\nlog(nfa) = %g\n", missing_regions[i].lnfa);
+        }
+    }
+
+    if (foreign_regions_n + missing_regions_n == 0 && main_grid < 1)
+        printf("\nNo suspicious traces found in the image "
+               "with the performed analysis.\n");
+
+    if (foreign_regions_n + missing_regions_n > 0) {
+        printf("\nSuspicious traces found in the image.\nThis may be caused "
+               "by image manipulations such as resampling, \ncopy-paste, "
+               "splicing. Please examine the deviant meaningful region \n"
+               "to make your own opinion about a potential forgery.\n");
+    }
 
     /* store vote map and forgery detection outputs */
-    iio_write_image_double("luminance.png", image, X, Y);
+    iio_write_image_double("luminance.png", luminance, X, Y);
     iio_write_image_int("votes.png", votes, X, Y);
-    iio_write_image_int("votes_compressed.png", votes_compressed, X, Y);
-    iio_write_image_int("mask_f.png", mask_f, X, Y);
-    iio_write_image_int("mask_m.png", mask_m, X, Y);
+    iio_write_image_int("votes_jpeg.png", votes_jpeg, X, Y);
+    iio_write_image_int("mask_f.png", mask_f_reg, X, Y);
+    iio_write_image_int("mask_m.png", mask_m_reg, X, Y);
 
     /* free memory */
     free((void *) input);
-    free((void *) input_compressed);
-
-    free((void *) image);
-    free((void *) image_compressed);
-
+    if (input_jpeg != NULL) free((void *) input_jpeg);
+    free((void *) luminance);
+    free((void *) luminance_jpeg);
     free((void *) votes);
-    free((void *) votes_compressed);
-
+    free((void *) votes_jpeg);
     free((void *) foreign_regions);
     free((void *) missing_regions);
-
-    free((void *) f);
     free((void *) mask_f);
-    free((void *) m);
+    free((void *) mask_f_reg);
     free((void *) mask_m);
+    free((void *) mask_m_reg);
 
     return EXIT_SUCCESS;
 }
-/* ---------------------------------------------------------------------------- */
+/*----------------------------------------------------------------------------*/

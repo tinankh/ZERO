@@ -84,6 +84,12 @@ test images. This can be done by executing:
     make test
 ```
 
+To create the compressed version of the image, use imagemagick
+```bash
+    convert -quality 99% <image> <image_compressed.jpg>
+```
+
+
 This should print the following message:
 ```
 test on roma.png

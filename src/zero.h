@@ -22,14 +22,12 @@
 #ifndef ZERO_H
 #define ZERO_H
 
-
 /* Structure for local forgeries */
 typedef struct {
     int x0, y0, x1, y1;
     int grid;
     double lnfa;
 }  meaningful_reg;
-
 
 void error(char * msg);
 
@@ -43,16 +41,18 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y);
 
 int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y);
 
-int detect_forgeries(int * votes, int * forgery, int * forgery_e,
+int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
                      meaningful_reg * forged_regions, double * lnfa_grids,
-                     int X, int Y, int grid_to_exclude, int vote_max);
+                     int X, int Y, int grid_to_exclude, int grid_max);
 
-int zero(double * input, double * input_compressed,
-         double * image, double * image_compressed,
-         int * votes, int * votes_compressed,
+int zero(double * input, double * input_jpeg,
+         double * luminance, double * luminance_jpeg,
+         int * votes, int * votes_jpeg,
          double * lnfa_grids,
-         meaningful_reg * foreign_regions, meaningful_reg * missing_regions,
-         int * f, int * mask_f, int * m, int * mask_m,
+         meaningful_reg * foreign_regions, int * foreign_regions_n,
+         meaningful_reg * missing_regions, int * missing_regions_n,
+         int * mask_f, int * mask_f_reg, int * mask_m, int * mask_m_reg,
          int X, int Y, int C);
 
 #endif
+/*----------------------------------------------------------------------------*/
