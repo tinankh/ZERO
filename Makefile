@@ -33,6 +33,6 @@ test: zero
 
 clean:
 	rm -f zero
-	rm -f luminance.png votes.png votes_compressed.png mask_f.png mask_m.png
+	rm -f luminance.png votes.png votes_jpeg.png mask_f.png mask_m.png
 
 .PHONY: clean

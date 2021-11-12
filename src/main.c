@@ -53,8 +53,8 @@ int main(int argc, char ** argv) {
     input = iio_read_image_double_split(argv[1], &X, &Y, &C);
     if (argc == 3) {
         input_jpeg = iio_read_image_double_split(argv[2], &XX, &YY, &CC);
-        if (X != XX || Y != YY || C != CC)
-            error("image and image_jpeg99 have different size or channels");
+        if (X != XX || Y != YY )
+            error("image and image_jpeg99 have different size");
     }
 
     /* allocate memory */
@@ -74,65 +74,59 @@ int main(int argc, char ** argv) {
                      votes, votes_jpeg, lnfa_grids,
                      foreign_regions, &foreign_regions_n,
                      missing_regions, &missing_regions_n,
-                     mask_f, mask_f_reg, mask_m, mask_m_reg,  X, Y, C);
+                     mask_f, mask_f_reg, mask_m, mask_m_reg,  X, Y, C, CC);
 
     /* print detection result */
-
-    if (main_grid > -1) {
-        /* print main grid */
-        printf("main grid: #%d [%d %d] log(nfa) = %g\n", main_grid,
-               main_grid % 8, main_grid / 8, lnfa_grids[main_grid]);
-        global_grids++;
-    }
 
     if (main_grid == -1)
         /* main grid not found */
         printf("No overall JPEG grid found.\n");
 
-    if (main_grid > 0)
-        printf("The most meaningful JPEG grid origin is not (0,0).\n"
-               "This may indicate that the image has been cropped.\n");
+    if (main_grid > -1) {
+        /* print main grid */
+        printf("main grid found: #%d (%d,%d) log(nfa) = %g\n", main_grid,
+               main_grid % 8, main_grid / 8, lnfa_grids[main_grid]);
+        global_grids++;
+    }
 
     for (int i=0; i<64; i++) {
         /* print list of meaningful grids */
         if (lnfa_grids[i] < 0.0 && i != main_grid) {
-            printf("significant global grid: #%d [%d %d] log(nfa) = %g\n", i,
-                   i % 8, i / 8, lnfa_grids[i]);
+            printf("meaningful global grid found: #%d (%d,%d) log(nfa) = %g\n",
+                   i, i % 8, i / 8, lnfa_grids[i]);
             global_grids++;
         }
     }
-
-    if (global_grids > 1)
-        printf("There is more than one meaningful grid.\n"
-               "This is suspicious.\n");
 
     if (foreign_regions_n != 0) {
         for (int i=0; i<foreign_regions_n; i++) {
             if (main_grid != -1)
                 printf("\nA meaningful grid different from the main one "
-                       "was found here: ");
+                       "was found here:\n");
             else
-                printf("\nA grid was found here: \n");
-            printf("%d %d - %d %d [%dx%d]",
+                printf("\nA meaningful grid was found here:\n");
+            printf("bounding box: %d %d to %d %d [%dx%d]",
                    foreign_regions[i].x0, foreign_regions[i].y0,
                    foreign_regions[i].x1, foreign_regions[i].y1,
                    foreign_regions[i].x1 - foreign_regions[i].x0+1,
                    foreign_regions[i].y1 - foreign_regions[i].y0+1);
-            printf("\ngrid: #%d [%d %d] ", foreign_regions[i].grid,
+            printf(" grid: #%d (%d,%d)", foreign_regions[i].grid,
                    foreign_regions[i].grid % 8, foreign_regions[i].grid / 8 );
-            printf("\nlog(nfa) = %g\n", foreign_regions[i].lnfa);
+            printf(" log(nfa) = %g\n", foreign_regions[i].lnfa);
         }
     }
 
     if (main_grid > -1 && missing_regions_n > 0) {
         for (int i=0; i<missing_regions_n; i++) {
-            printf("\nAn absence of grid was found here: \n");
-            printf("%d %d - %d %d [%dx%d]",
+            printf("\nA region with missing JPEG grid was found here:\n");
+            printf("bounding box: %d %d to %d %d [%dx%d]",
                    missing_regions[i].x0, missing_regions[i].y0,
                    missing_regions[i].x1, missing_regions[i].y1,
                    missing_regions[i].x1 - missing_regions[i].x0+1,
                    missing_regions[i].y1 - missing_regions[i].y0+1);
-            printf("\nlog(nfa) = %g\n", missing_regions[i].lnfa);
+            printf(" grid: #%d (%d,%d)", missing_regions[i].grid,
+                   missing_regions[i].grid % 8, missing_regions[i].grid / 8 );
+            printf(" log(nfa) = %g\n", missing_regions[i].lnfa);
         }
     }
 
@@ -140,10 +134,18 @@ int main(int argc, char ** argv) {
         printf("\nNo suspicious traces found in the image "
                "with the performed analysis.\n");
 
+    if (main_grid > 0)
+        printf("\nThe most meaningful JPEG grid origin is not (0,0).\n"
+               "This may indicate that the image has been cropped.\n");
+
+    if (global_grids > 1)
+        printf("\nThere is more than one meaningful grid. "
+               "This is suspicious.\n");
+
     if (foreign_regions_n + missing_regions_n > 0) {
         printf("\nSuspicious traces found in the image.\nThis may be caused "
                "by image manipulations such as resampling, \ncopy-paste, "
-               "splicing. Please examine the deviant meaningful region \n"
+               "splicing.  Please examine the deviant meaningful region \n"
                "to make your own opinion about a potential forgery.\n");
     }
 

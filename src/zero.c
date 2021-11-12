@@ -410,7 +410,7 @@ int zero(double * input, double * input_jpeg,
          meaningful_reg * foreign_regions, int * foreign_regions_n,
          meaningful_reg * missing_regions, int * missing_regions_n,
          int * mask_f, int * mask_f_reg, int * mask_m, int * mask_m_reg,
-         int X, int Y, int C) {
+         int X, int Y, int C, int C_jpeg) {
 
     int main_grid = -1;
 
@@ -432,16 +432,20 @@ int zero(double * input, double * input_jpeg,
        try to found regions with missing JPEG grid */
     if (main_grid > -1 && input_jpeg != NULL) {
         /* luminance image */
-        rgb2luminance(input_jpeg, luminance_jpeg, X, Y, C);
+        rgb2luminance(input_jpeg, luminance_jpeg, X, Y, C_jpeg);
 
         /* compute vote map */
         compute_grid_votes_per_pixel(luminance_jpeg, votes_jpeg, X, Y);
 
         /* update votemap by avoiding the votes for the main grid */
-        for (int x=0; x<X; x++)
-            for (int y=0; y<Y; y++)
+        int D=1; // D comme dilatation
+
+        for (int x=D; x<X-D; x++)
+            for (int y=D; y<Y-D; y++)
                 if (votes[x+y*X] == main_grid)
-                    votes_jpeg[x+y*X] = -1;
+                    for (int xx=x-D; xx<=x+D; xx++)
+                        for (int yy=y-D; yy<=y+D; yy++)
+                            votes_jpeg[xx+yy*X] = -1;
 
         /* Try to detect an imposed JPEG grid.  No grid is to be excluded
            and we are interested only in grid with origin (0,0), so:

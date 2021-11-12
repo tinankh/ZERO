@@ -52,7 +52,7 @@ int zero(double * input, double * input_jpeg,
          meaningful_reg * foreign_regions, int * foreign_regions_n,
          meaningful_reg * missing_regions, int * missing_regions_n,
          int * mask_f, int * mask_f_reg, int * mask_m, int * mask_m_reg,
-         int X, int Y, int C);
+         int X, int Y, int C, int C_jpeg);
 
 #endif
 /*----------------------------------------------------------------------------*/

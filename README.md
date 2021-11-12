@@ -78,17 +78,16 @@ To compile the library to use the python binding do
     make libzero
 ```
 
-To verify a correct compilation you can apply the algorithm to the
-test images. This can be done by executing:
-```bash
-    make test
-```
-
 To create the compressed version of the image, use imagemagick
 ```bash
     convert -quality 99% <image> <image_compressed.jpg>
 ```
 
+To verify a correct compilation you can apply the algorithm to the
+test images. This can be done by executing:
+```bash
+    make test
+```
 
 This should print the following message:
 ```
@@ -102,7 +101,8 @@ No suspicious traces found in the image with the performed analysis.
 test on pelican.png
 -------------------
 ./zero pelican.png pelican99.jpg
-main grid: #6 [6 0] log(nfa) = -6373.72
+main grid found: #6 (6,0) log(nfa) = -6373.72
+
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
@@ -111,30 +111,28 @@ test on tampered1.png
 ./zero tampered1.png tampered1_99.jpg
 No overall JPEG grid found.
 
-A grid was found here:
-104 94 - 153 159 [50x66]
-grid: #0 [0 0]
-log(nfa) = -25.8163
+A meaningful grid was found here:
+bounding box: 104 94 to 153 159 [50x66] grid: #0 (0,0) log(nfa) = -25.8163
 
 Suspicious traces found in the image.
 This may be caused by image manipulations such as resampling,
-copy-paste, splicing. Please examine the deviant meaningful region
+copy-paste, splicing.  Please examine the deviant meaningful region
 to make your own opinion about a potential forgery.
 
 test on tampered2.png
 ---------------------
 ./zero tampered2.png tampered2_99.jpg
-main grid: #6 [6 0] log(nfa) = -6188.44
+main grid found: #6 (6,0) log(nfa) = -6188.44
+
+A meaningful grid different from the main one was found here:
+bounding box: 330 68 to 401 111 [72x44] grid: #34 (2,4) log(nfa) = -39.2402
+
 The most meaningful JPEG grid origin is not (0,0).
 This may indicate that the image has been cropped.
 
-A meaningful grid different from the main one was found here: 330 68 - 401 111 [72x44]
-grid: #34 [2 4]
-log(nfa) = -39.2402
-
 Suspicious traces found in the image.
 This may be caused by image manipulations such as resampling,
-copy-paste, splicing. Please examine the deviant meaningful region
+copy-paste, splicing.  Please examine the deviant meaningful region
 to make your own opinion about a potential forgery.
 ```
 
