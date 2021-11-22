@@ -303,7 +303,7 @@ int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
     int * used;
     int * reg_x;
     int * reg_y;
-    int W = 12; /* Distance to look for neighbors in the region growing process.
+    int W = 9; /* Distance to look for neighbors in the region growing process.
                    A meaningful forgery must have a density of votes of at least
                    1/64. Thus, its votes should not be in mean further away one
                    from another than a distance of 8. One could use a little
@@ -438,14 +438,12 @@ int zero(double * input, double * input_jpeg,
         compute_grid_votes_per_pixel(luminance_jpeg, votes_jpeg, X, Y);
 
         /* update votemap by avoiding the votes for the main grid */
-        int D=1; // D comme dilatation
+        int D=0; // D comme dilatation
 
         for (int x=D; x<X-D; x++)
             for (int y=D; y<Y-D; y++)
                 if (votes[x+y*X] == main_grid)
-                    for (int xx=x-D; xx<=x+D; xx++)
-                        for (int yy=y-D; yy<=y+D; yy++)
-                            votes_jpeg[xx+yy*X] = -1;
+                    votes_jpeg[x+y*X] = -1;
 
         /* Try to detect an imposed JPEG grid.  No grid is to be excluded
            and we are interested only in grid with origin (0,0), so:
