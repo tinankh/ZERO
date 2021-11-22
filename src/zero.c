@@ -304,10 +304,10 @@ int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
     int * reg_x;
     int * reg_y;
     int W = 9; /* Distance to look for neighbors in the region growing process.
-                   A meaningful forgery must have a density of votes of at least
-                   1/64. Thus, its votes should not be in mean further away one
-                   from another than a distance of 8. One could use a little
-                   more to allow for some variation in the distribution. */
+                  A meaningful forgery must have a density of votes of at least
+                  1/64. Thus, its votes should not be in mean further away one
+                  from another than a distance of 8. One could use a little
+                  more to allow for some variation in the distribution. */
 
     /* minimal block size that can lead to a meaningful detection */
     int min_size = ceil( 64.0 * logNT / log10( 64.0 ) );
