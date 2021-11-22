@@ -4,7 +4,7 @@ ZERO
 a local JPEG grid origin detector based on the number of zeros, a forgery detection tool
 ================================================
 
-Version 3 - July 2021
+Version 4 - Nov 2021
 
 by Tina Nikoukhah <tinanikoukhah@gmail.com>
 and Jérémy Anger <anger@ens-paris-saclay.fr>
