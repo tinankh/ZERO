@@ -438,10 +438,8 @@ int zero(double * input, double * input_jpeg,
         compute_grid_votes_per_pixel(luminance_jpeg, votes_jpeg, X, Y);
 
         /* update votemap by avoiding the votes for the main grid */
-        int D=0; // D comme dilatation
-
-        for (int x=D; x<X-D; x++)
-            for (int y=D; y<Y-D; y++)
+        for (int x=0; x<X; x++)
+            for (int y=0; y<Y; y++)
                 if (votes[x+y*X] == main_grid)
                     votes_jpeg[x+y*X] = -1;
 
