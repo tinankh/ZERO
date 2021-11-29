@@ -1,7 +1,8 @@
 ZERO
 ====
 
-a local JPEG grid origin detector based on the number of zeros, a forgery detection tool
+ZERO: a local JPEG grid origin detector based on the number of DCT zeros
+and its applications in image forensics
 ================================================
 
 Version 4 - Nov 2021
