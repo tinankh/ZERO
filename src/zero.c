@@ -259,7 +259,7 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
     /* initialize counts */
     for (int i=0; i<64; i++) grid_votes[i] = 0;
 
-    /* count votes per possible grid origine */
+    /* count votes per possible grid origin */
     for (int x=0; x<X; x++)
         for (int y=0; y<Y; y++)
             if (votes[x+y*X] >= 0 && votes[x+y*X] < 64) {
@@ -284,7 +284,8 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
     }
 
     /* meaningful grid -> main grid found! */
-    if (lnfa_grids[most_voted_grid] < 0.0)
+    if (most_voted_grid >= 0 && most_voted_grid < 64
+        && lnfa_grids[most_voted_grid] < 0.0)
         return most_voted_grid;
 
     return -1;
