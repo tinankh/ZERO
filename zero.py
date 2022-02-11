@@ -18,10 +18,9 @@ typedef struct {
     int grid;
     double lnfa;
 } meaningful_reg;
-int detect_foreign_grids(int * votes, int * forgery, int * forgery_e, meaningful_reg * forged_regions,
-                   int X, int Y, int main_grid);
-int detect_missing_grid(int * votes, int * forgery, int * forgery_ext,
-                   meaningful_reg * forged_regions, int X, int Y);
+int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
+                     meaningful_reg * forged_regions,
+                     int X, int Y, int grid_to_exclude, int grid_max);
 ''')
 
 libzero = ffi.dlopen('./libzero.so')
@@ -106,8 +105,8 @@ def main(filename):
     forgery_result = np.zeros(im.shape, dtype=np.int32)
 
     forged_region = ffi.new('meaningful_reg[]', w*h)
-    forgery_found = libzero.detect_foreign_grids(P(votes), P(forgery), P(forgery_c),
-                                                 forged_region, w, h, main_grid)
+    forgery_found = libzero.detect_forgeries(P(votes), P(forgery), P(forgery_c),
+                                             forged_region, w, h, main_grid, 63)
 
     if forgery_found > 0:
         for i in range(forgery_found):
@@ -168,8 +167,8 @@ def main(filename):
         forgery_c2 = np.zeros(img.shape, dtype=np.int32)
         forged_region = ffi.new('meaningful_reg[]', w*h)
 
-        forgery_found2 = libzero.detect_missing_grid(P(votes2), P(forgery), P(forgery_c2),
-                                            forged_region, w, h)
+        forgery_found2 = libzero.detect_forgeries(P(votes2), P(forgery), P(forgery_c2),
+                                                  forged_region, w, h, -1, 0)
 
         if forgery_found2 > 0:
             for i in range(forgery_found2):

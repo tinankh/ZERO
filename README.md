@@ -1,15 +1,12 @@
-ZERO
-====
-
 ZERO: a local JPEG grid origin detector based on the number of DCT zeros
 and its applications in image forensics
 ================================================
 
 Version 4 - Nov 2021
 
-by Tina Nikoukhah <tinanikoukhah@gmail.com>
-and Jérémy Anger <anger@ens-paris-saclay.fr>
-and Rafael Grompone von Gioi <grompone@ens-paris-saclay.fr>
+by Tina Nikoukhah <tina.nikoukhah@gmail.com>
+and Jérémy Anger <jeremy.anger@ens-paris-saclay.fr>
+and Rafael Grompone von Gioi <grompone@gmail.com>
 
 
 Introduction
@@ -141,8 +138,8 @@ to make your own opinion about a potential forgery.
 Copyright and License
 ---------------------
 
-Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
-Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+Copyright (c) 2018-2021 Tina Nikoukhah <tina.nikoukhah@gmail.com>
+Copyright (c) 2018-2021 Jérémy Anger <jeremy.anger@ens-paris-saclay.fr>
 Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
 
 

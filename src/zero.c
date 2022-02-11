@@ -1,7 +1,16 @@
 /*----------------------------------------------------------------------------
 
+  ZERO: JPEG grid detector applied to forgery detection in digital images. This
+  code is part of the following publication and was subject to peer review:
+
+    "ZERO: a local JPEG grid origin detector based on the number of DCT zeros
+    and its applications in image forensics" by Tina Nikoukhah, Jérémy Anger,
+    Miguel Colom, Jean-Michel Morel, Rafael Grompone von Gioi,
+    Image Processing On Line, 2021.
+    http://dx.doi.org/10.5201/ipol.2021.XXX
+
   Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2021 Jérémy Anger <jeremy.anger@ens-paris-saclay.fr>
   Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
@@ -112,7 +121,7 @@ double log_nfa(int n, int k, double p, double logNT) {
 
     term = exp(log1term);
     if (term == 0.0) {                       /* the first term is almost zero */
-        if ((double)k > (double)n * p)     /* at begining or end of the tail? */
+        if ((double)k > (double)n * p)    /* at beginning or end of the tail? */
             return log1term / M_LN10 + logNT; /* end: use just the first term */
         else
             return logNT;                     /* begin: the tail is roughly 1 */
@@ -173,9 +182,6 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y) {
     for (int x=0; x<X-7; x++)
         for (int y=0; y<Y-7; y++) {
             int z = 0; /* number of zeros */
-            /* int const_along_x = FALSE; */
-            /* int const_along_y = FALSE; */
-
             int const_along_x = TRUE;
             int const_along_y = TRUE;
 
@@ -295,7 +301,7 @@ int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y) {
 /* detects zones which are inconsistent with a given grid.
  */
 int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
-                     meaningful_reg * forged_regions, double * lnfa_grids,
+                     meaningful_reg * forged_regions,
                      int X, int Y, int grid_to_exclude, int grid_max) {
     double logNT = 2.0 * log10(64.0) + 2.0 * log10(X) + 2.0 * log10(Y);
     double p = 1.0 / 64.0;
@@ -426,7 +432,7 @@ int zero(double * input, double * input_jpeg,
 
     /* compute forged regions */
     *foreign_regions_n = detect_forgeries(votes, mask_f, mask_f_reg,
-                                          foreign_regions, lnfa_grids, X, Y,
+                                          foreign_regions, X, Y,
                                           main_grid, 63);
 
     /* if a global grid is found and the JPEG QF-99 version is provided,
@@ -448,8 +454,7 @@ int zero(double * input, double * input_jpeg,
            and we are interested only in grid with origin (0,0), so:
            grid_to_exclude = -1 and grid_max = 0 */
         *missing_regions_n = detect_forgeries(votes_jpeg, mask_m, mask_m_reg,
-                                              missing_regions, lnfa_grids,
-                                              X, Y, -1, 0);
+                                              missing_regions, X, Y, -1, 0);
     }
 
     return main_grid;

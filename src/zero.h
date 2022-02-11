@@ -1,7 +1,16 @@
 /*----------------------------------------------------------------------------
 
+  ZERO: JPEG grid detector applied to forgery detection in digital images. This
+  code is part of the following publication and was subject to peer review:
+
+    "ZERO: a local JPEG grid origin detector based on the number of DCT zeros
+    and its applications in image forensics" by Tina Nikoukhah, Jérémy Anger,
+    Miguel Colom, Jean-Michel Morel, Rafael Grompone von Gioi,
+    Image Processing On Line, 2021.
+    http://dx.doi.org/10.5201/ipol.2021.XXX
+
   Copyright (c) 2018-2021 Rafael Grompone von Gioi <grompone@gmail.com>
-  Copyright (c) 2018-2021 Jérémy Anger <anger@cmla.ens-cachan.fr>
+  Copyright (c) 2018-2021 Jérémy Anger <jeremy.anger@ens-paris-saclay.fr>
   Copyright (c) 2018-2021 Tina Nikoukhah <tinanikoukhah@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
@@ -42,7 +51,7 @@ void compute_grid_votes_per_pixel(double * image, int * votes, int X, int Y);
 int detect_global_grids(int * votes, double * lnfa_grids, int X, int Y);
 
 int detect_forgeries(int * votes, int * forgery_mask, int * forgery_mask_reg,
-                     meaningful_reg * forged_regions, double * lnfa_grids,
+                     meaningful_reg * forged_regions,
                      int X, int Y, int grid_to_exclude, int grid_max);
 
 int zero(double * input, double * input_jpeg,
